@@ -15,7 +15,7 @@ void print_gauss_z_help(const char *name) {
   printf("REQUIRED:\n");
   printf(" s -- Gaussian width parameter σ, double > 0\n");
   printf(" t -- cutoff parameter for sampling from uniform distribution,\n");
-  printf("      values outside of [⌊c⌉-⌈στ⌉, ⌊c⌉+⌈στ⌉] are considered to have probability zero.\n");
+  printf("      values outside of [⌊c⌋-⌈στ⌉, ⌊c⌋+⌈στ⌉] are considered to have probability zero.\n");
   printf("      integer > 0\n");
   printf(" c -- center of Gaussian distribution. double\n");
   printf(" a -- algorithm:\n");

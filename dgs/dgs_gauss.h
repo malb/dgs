@@ -188,9 +188,9 @@ void dgs_disc_gauss_mp_clear(dgs_disc_gauss_mp_t *self);
 typedef struct _dgs_disc_gauss_dp_t {
   double sigma; //< width parameter σ
   double c; //< center parameter c
-  double c_r; //< fmod(c,1.0)
+  double c_r; //< (long)c
   long   c_z; //< c - c_r
-  size_t tau; //< samples outside of (c-τσ,...,c+τσ) are considered to have probability 0
+  size_t tau; //< samples outside of [⌊c⌋-⌈στ⌉,…, ⌊c⌋+⌈στ⌉] are considered to have probability 0
   dgs_disc_gauss_alg_t algorithm; //< algorithm to use
 
   dgs_bern_uniform_t *B; //< source of uniform bits
