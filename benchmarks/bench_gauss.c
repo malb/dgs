@@ -50,6 +50,8 @@ double run_mp(double sigma_, double c_, int tau, dgs_disc_gauss_alg_t alg, size_
   mpfr_clear(sigma);
   mpz_clear(r);
   mpfr_clear(c);
+
+  gmp_randclear(state);
   
   variance /= ntrials;
   return sqrt(variance);
@@ -100,6 +102,9 @@ int main(int argc, char *argv[]) {
   run(params.sigma, params.c, params.tau, params.precision, params.algorithm, ntrials, &t);
   double walltime = t/100000.0/ntrials*(1000.0*1000.0); // ms
 
-  printf("wall time: %8.3f ms per call\n", walltime); 
+  printf("wall time: %8.3f ms per call\n", walltime);
+
+  mpfr_free_cache();
+  
   return 0;
 }

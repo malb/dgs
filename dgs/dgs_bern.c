@@ -24,6 +24,8 @@ dgs_bern_uniform_t* dgs_bern_uniform_init(size_t length) {
 
 
 void dgs_bern_uniform_clear(dgs_bern_uniform_t *self) {
+  if(!self)
+    return;
   mpz_clear(self->tmp);
   free(self);
 }
@@ -55,6 +57,8 @@ long dgs_bern_mp_call(dgs_bern_mp_t *self, gmp_randstate_t state) {
 }
 
 void dgs_bern_mp_clear(dgs_bern_mp_t *self) {
+  if (!self)
+    return;
   mpfr_clear(self->tmp);
   mpfr_clear(self->p);
   free(self);
@@ -164,6 +168,8 @@ long dgs_bern_dp_call(dgs_bern_dp_t *self) {
 }
 
 void dgs_bern_dp_clear(dgs_bern_dp_t *self) {
+  if(!self)
+    return;
   free(self);
 }
 
