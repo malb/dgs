@@ -2,7 +2,6 @@
 Makefile
 Makefile.in
 NEWS
-README
 aclocal.m4
 autom4te.cache/
 benchmarks/.deps/
@@ -18,9 +17,7 @@ depcomp
 dgs/.deps/
 dgs/.dirstamp
 dgs/config.h
-dgs/dgs_bern.lo
-dgs/dgs_gauss_dp.lo
-dgs/dgs_gauss_mp.lo
+*.lo
 dgs/stamp-h1
 install-sh
 libdgs.la
