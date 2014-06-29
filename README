@@ -56,6 +56,3 @@ with ``dgs_gauss_dp.c`` which implements the same algorithms as
     dgs_disc_gauss_dp_t *D = dgs_disc_gauss_dp_init(<sigma>, <c>, <tau>, <algorithm>);
     D->call(); // as often as needed
     dgs_disc_gauss_dp_clear(D);
-
-## Literature ##
-
