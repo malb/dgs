@@ -1,3 +1,35 @@
+/******************************************************************************
+*
+*                        DGS - Discrete Gaussian Samplers
+*
+* Copyright (c) 2014, Martin Albrecht  <martinralbrecht+dgs@googlemail.com>
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*
+* 1. Redistributions of source code must retain the above copyright notice, this
+*    list of conditions and the following disclaimer.
+* 2. Redistributions in binary form must reproduce the above copyright notice,
+*    this list of conditions and the following disclaimer in the documentation
+*    and/or other materials provided with the distribution.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+* FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+* CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+* OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*
+* The views and conclusions contained in the software and documentation are
+* those of the authors and should not be interpreted as representing official
+* policies, either expressed or implied, of the FreeBSD Project.
+******************************************************************************/
+
 #include "dgs.h"
 #include <assert.h>
 #include <stdlib.h>
@@ -60,8 +92,7 @@ long dgs_disc_gauss_sigma2p_dp_call(dgs_disc_gauss_sigma2p_t *self) {
 
 
 void dgs_disc_gauss_sigma2p_clear(dgs_disc_gauss_sigma2p_t *self) {
-  if (!self)
-    return;
+  assert(self != NULL);
   if (self->B) dgs_bern_uniform_clear(self->B);
   free(self);
 }
@@ -71,10 +102,10 @@ void dgs_disc_gauss_sigma2p_clear(dgs_disc_gauss_sigma2p_t *self) {
 static inline void _dgs_disc_gauss_mp_init_f(mpfr_t f, const mpfr_t sigma) {
   mpfr_init2(f, mpfr_get_prec(sigma));
   mpfr_set(f, sigma, MPFR_RNDN);
-  mpfr_sqr(f, f, MPFR_RNDN); // f = σ^2
-  mpfr_mul_ui(f, f, 2, MPFR_RNDN); // f = 2 σ^2
-  mpfr_ui_div(f, 1, f, MPFR_RNDN);  // f = 1/(2 σ^2)
-  mpfr_neg(f, f, MPFR_RNDN); // f = -1/(2 σ^2)
+  mpfr_sqr(f, f, MPFR_RNDN); // f = σ²
+  mpfr_mul_ui(f, f, 2, MPFR_RNDN); // f = 2 σ²
+  mpfr_ui_div(f, 1, f, MPFR_RNDN);  // f = 1/(2 σ²)
+  mpfr_neg(f, f, MPFR_RNDN); // f = -1/(2 σ²)
 }
 
 static inline void _dgs_disc_gauss_mp_init_upper_bound(mpz_t upper_bound,
@@ -98,17 +129,17 @@ static inline void _dgs_disc_gauss_mp_init_upper_bound(mpz_t upper_bound,
 static inline void _dgs_disc_gauss_mp_init_bexp(dgs_disc_gauss_mp_t *self, mpfr_t sigma, mpz_t upper_bound) {
   mpfr_init2(self->f, mpfr_get_prec(sigma));
   mpfr_set(self->f, sigma, MPFR_RNDN); // f = σ
-  mpfr_sqr(self->f, self->f, MPFR_RNDN); // f = σ^2
-  mpfr_mul_ui(self->f, self->f, 2, MPFR_RNDN); // f = 2 σ^2
+  mpfr_sqr(self->f, self->f, MPFR_RNDN); // f = σ²
+  mpfr_mul_ui(self->f, self->f, 2, MPFR_RNDN); // f = 2 σ²
   size_t l = 2*mpz_sizeinbase(upper_bound, 2);
   self->Bexp = dgs_bern_exp_mp_init(self->f, l);
 }
 
 dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(mpfr_t sigma, mpfr_t c, size_t tau, dgs_disc_gauss_alg_t algorithm) {
   if (mpfr_cmp_ui(sigma,0)<= 0)
-    dgs_die("σ must be > 0");
+    dgs_die("sigma must be > 0");
   if (tau == 0)
-    dgs_die("τ must be > 0");
+    dgs_die("tau must be > 0");
 
   mpfr_prec_t prec = mpfr_get_prec(sigma);
   if (mpfr_get_prec(c) > prec)
@@ -117,9 +148,9 @@ dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(mpfr_t sigma, mpfr_t c, size_t tau, 
   dgs_disc_gauss_mp_t *self = (dgs_disc_gauss_mp_t*)calloc(sizeof(dgs_disc_gauss_mp_t),1);
   if (!self) dgs_die("out of memory");
 
-  mpz_init(self->k);
   mpz_init(self->x);
   mpz_init(self->x2);
+  mpz_init(self->k);
   mpfr_init2(self->y, prec);
   mpfr_init2(self->z, prec);
 
@@ -159,11 +190,15 @@ dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(mpfr_t sigma, mpfr_t c, size_t tau, 
 
     if (mpfr_zero_p(self->c_r)) { /* c is an integer */
       self->call = dgs_disc_gauss_mp_call_uniform_table;
-      if (mpz_cmp_ui(self->upper_bound, ULONG_MAX/sizeof(mpfr_t))>0)
+      if (mpz_cmp_ui(self->upper_bound, ULONG_MAX/sizeof(mpfr_t))>0){
+        dgs_disc_gauss_mp_clear(self);
         dgs_die("integer overflow");
+      }
       self->rho = (mpfr_t*)malloc(sizeof(mpfr_t)*mpz_get_ui(self->upper_bound));
-      if (!self->rho)
+      if (!self->rho){
+        dgs_disc_gauss_mp_clear(self);
         dgs_die("out of memory");
+      }
 
       mpfr_t x_;
       mpfr_init2(x_, prec);
@@ -180,11 +215,16 @@ dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(mpfr_t sigma, mpfr_t c, size_t tau, 
 
     } else { /* c is not an integer, we need a bigger table as our nice symmetry is lost */
       self->call = dgs_disc_gauss_mp_call_uniform_table_offset;
-      if (mpz_cmp_ui(self->two_upper_bound_minus_one, ULONG_MAX/sizeof(mpfr_t)) > 0)
+      if (mpz_cmp_ui(self->two_upper_bound_minus_one, ULONG_MAX/sizeof(mpfr_t)) > 0){
+        dgs_disc_gauss_mp_clear(self);
         dgs_die("integer overflow");
+      }
       // we need a bigger table
       self->rho = (mpfr_t*)malloc(sizeof(mpfr_t)*mpz_get_ui(self->two_upper_bound_minus_one));
-      if (!self->rho) dgs_die("out of memory");
+      if (!self->rho){
+        dgs_disc_gauss_mp_clear(self);
+        dgs_die("out of memory");
+      }
 
       mpfr_t x_;
       mpfr_init2(x_, prec);
@@ -211,7 +251,7 @@ dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(mpfr_t sigma, mpfr_t c, size_t tau, 
                                         self->sigma, self->tau);
 
     if (!mpfr_zero_p(self->c_r)) {
-      free(self);
+      dgs_disc_gauss_mp_clear(self);
       dgs_die("algorithm DGS_DISC_GAUSS_UNIFORM_LOGTABLE requires c%1 == 0");
     }
 
@@ -223,7 +263,7 @@ dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(mpfr_t sigma, mpfr_t c, size_t tau, 
     self->call = dgs_disc_gauss_mp_call_sigma2_logtable;
 
     if (!mpfr_zero_p(self->c_r)) {
-      free(self);
+      dgs_disc_gauss_mp_clear(self);
       dgs_die("algorithm DGS_DISC_GAUSS_SIGMA2_LOGTABLE requires c%1 == 0");
     }
 
@@ -240,8 +280,8 @@ dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(mpfr_t sigma, mpfr_t c, size_t tau, 
     mpfr_div(tmp, sigma, sigma2, MPFR_RNDN);
     mpfr_get_z(self->k, tmp, MPFR_RNDN);
     mpfr_mul_z(self->sigma, sigma2, self->k, MPFR_RNDN); //k·σ₂
-    mpfr_clear(tmp);
     mpfr_clear(sigma2);
+    mpfr_clear(tmp);
 
     _dgs_disc_gauss_mp_init_upper_bound(self->upper_bound,
                                         self->upper_bound_minus_one,
@@ -344,12 +384,10 @@ void dgs_disc_gauss_mp_call_sigma2_logtable(mpz_t rop, dgs_disc_gauss_mp_t *self
 /** GENERAL SIGMA :: CLEAR **/
 
 void dgs_disc_gauss_mp_clear(dgs_disc_gauss_mp_t *self) {
-  if (!self)
-    return;
   mpfr_clear(self->sigma);
-  dgs_bern_uniform_clear(self->B);
-  dgs_bern_exp_mp_clear(self->Bexp);
-  dgs_disc_gauss_sigma2p_clear(self->D2);
+  if (self->B) dgs_bern_uniform_clear(self->B);
+  if (self->Bexp) dgs_bern_exp_mp_clear(self->Bexp);
+  if (self->D2) dgs_disc_gauss_sigma2p_clear(self->D2);
   mpz_clear(self->x);
   mpz_clear(self->x2);
   mpz_clear(self->k);
