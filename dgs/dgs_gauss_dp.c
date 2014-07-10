@@ -58,6 +58,23 @@ dgs_disc_gauss_dp_t *dgs_disc_gauss_dp_init(double sigma, double c, size_t tau, 
   self->c_r = self->c - ((double)self->c_z);
   self->tau = tau;
 
+  double sigma2 = sqrt(1.0/(2*log(2.0)));
+  double k = sigma/sigma2;
+
+  if (algorithm == DGS_DISC_GAUSS_DEFAULT) {
+    /* 1. try the uniform algorithm */
+    if (2*ceil(self->sigma*tau) * sizeof(double) <= DGS_DISC_GAUSS_MAX_TABLE_SIZE_BYTES) {
+      algorithm = DGS_DISC_GAUSS_UNIFORM_TABLE;
+    /* 2. see if sigma2 is close enough */
+    } else if(fabs(round(k)-k) < DGS_DISC_GAUSS_EQUAL_DIFF) {
+      algorithm = DGS_DISC_GAUSS_SIGMA2_LOGTABLE;
+    /* 3. do logtables */
+    } else {
+      algorithm = DGS_DISC_GAUSS_UNIFORM_LOGTABLE;
+    }
+  }
+  self->algorithm = algorithm;
+
   switch(algorithm) {
 
   case DGS_DISC_GAUSS_UNIFORM_ONLINE:
@@ -128,8 +145,6 @@ dgs_disc_gauss_dp_t *dgs_disc_gauss_dp_init(double sigma, double c, size_t tau, 
       dgs_die("algorithm DGS_DISC_GAUSS_SIGMA2_LOGTABLE requires c%1 == 0");
     }
 
-    double sigma2 = sqrt(1.0/(2*log(2.0)));
-    double k = sigma/sigma2;
     self->k = round(k);
     self->sigma = self->k * sigma2;
 

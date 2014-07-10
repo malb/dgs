@@ -34,8 +34,18 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <math.h>
 
 /** SIGMA2 **/
+
+static void sigma2_init(mpfr_t sigma2, int prec) {
+  mpfr_init2(sigma2, prec);
+  mpfr_set_ui(sigma2, 2, MPFR_RNDN); // 2
+  mpfr_log(sigma2, sigma2, MPFR_RNDN); //log₂ 2
+  mpfr_mul_ui(sigma2, sigma2, 2, MPFR_RNDN); //2·log₂ 2
+  mpfr_ui_div(sigma2, 1, sigma2, MPFR_RNDN); //1/(2·log₂ 2)
+  mpfr_sqrt(sigma2, sigma2, MPFR_RNDN); //σ₂ = sqrt(1/(2·log₂ 2))
+}
 
 dgs_disc_gauss_sigma2p_t *dgs_disc_gauss_sigma2p_init() {
   dgs_disc_gauss_sigma2p_t *self = (dgs_disc_gauss_sigma2p_t*)calloc(sizeof(dgs_disc_gauss_sigma2p_t),1);
@@ -166,6 +176,31 @@ dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(mpfr_t sigma, mpfr_t c, size_t tau, 
 
   self->tau = tau;
 
+
+  if (algorithm == DGS_DISC_GAUSS_DEFAULT) {
+    mpfr_t k; mpfr_init(k);
+    mpfr_t sigma2; sigma2_init(sigma2, prec);
+    mpfr_div(k, self->sigma, sigma2, MPFR_RNDN);
+    double k_ = mpfr_get_d(k, MPFR_RNDN);
+    mpfr_clear(sigma2);
+    mpfr_clear(k);
+
+    double sigma_ = mpfr_get_d(self->sigma, MPFR_RNDN);
+    unsigned long tau_ = mpz_get_ui(self->tau);
+
+    /* 1. try the uniform algorithm */
+    if (2*ceil(sigma_*tau_) * sizeof(double) <= DGS_DISC_GAUSS_MAX_TABLE_SIZE_BYTES) {
+      algorithm = DGS_DISC_GAUSS_UNIFORM_TABLE;
+    /* 2. see if sigma2 is close enough */
+    } else if(abs(round(k_)-k_) < DGS_DISC_GAUSS_EQUAL_DIFF) {
+      algorithm = DGS_DISC_GAUSS_SIGMA2_LOGTABLE;
+    /* 3. do logtables */
+    } else {
+      algorithm = DGS_DISC_GAUSS_UNIFORM_LOGTABLE;
+    }
+  }
+  self->algorithm = algorithm;
+
   switch(algorithm) {
 
   case DGS_DISC_GAUSS_UNIFORM_ONLINE: {
@@ -267,21 +302,17 @@ dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(mpfr_t sigma, mpfr_t c, size_t tau, 
       dgs_die("algorithm DGS_DISC_GAUSS_SIGMA2_LOGTABLE requires c%1 == 0");
     }
 
-    mpfr_t tmp;
-    mpfr_init2(tmp, prec);
+    mpfr_t k;
+    mpfr_init2(k, prec);
 
     mpfr_t sigma2;
-    mpfr_init2(sigma2, prec);
-    mpfr_set_ui(sigma2, 2, MPFR_RNDN); // 2
-    mpfr_log(sigma2, sigma2, MPFR_RNDN); //log₂ 2
-    mpfr_mul_ui(sigma2, sigma2, 2, MPFR_RNDN); //2·log₂ 2
-    mpfr_ui_div(sigma2, 1, sigma2, MPFR_RNDN); //1/(2·log₂ 2)
-    mpfr_sqrt(sigma2, sigma2, MPFR_RNDN); //σ₂ = sqrt(1/(2·log₂ 2))
-    mpfr_div(tmp, sigma, sigma2, MPFR_RNDN);
-    mpfr_get_z(self->k, tmp, MPFR_RNDN);
+    sigma2_init(sigma2, prec);
+
+    mpfr_div(k, sigma, sigma2, MPFR_RNDN);
+    mpfr_get_z(self->k, k, MPFR_RNDN);
     mpfr_mul_z(self->sigma, sigma2, self->k, MPFR_RNDN); //k·σ₂
     mpfr_clear(sigma2);
-    mpfr_clear(tmp);
+    mpfr_clear(k);
 
     _dgs_disc_gauss_mp_init_upper_bound(self->upper_bound,
                                         self->upper_bound_minus_one,

@@ -112,14 +112,23 @@
 
 #define DGS_DISC_GAUSS_EQUAL_DIFF 0.001
 
+/**
+   Available Algorithms
+*/
 
 typedef enum {
+  DGS_DISC_GAUSS_DEFAULT           = 0x0, //<pick algorithm
   DGS_DISC_GAUSS_UNIFORM_ONLINE    = 0x1, //<call dgs_disc_gauss_mp_call_uniform_online
   DGS_DISC_GAUSS_UNIFORM_TABLE     = 0x2, //<call dgs_disc_gauss_mp_call_uniform_table
   DGS_DISC_GAUSS_UNIFORM_LOGTABLE  = 0x3, //<call dgs_disc_gauss_mp_call_uniform_logtable
   DGS_DISC_GAUSS_SIGMA2_LOGTABLE   = 0x7, //<call dgs_disc_gauss_mp_call_sigma2_logtable
 } dgs_disc_gauss_alg_t;
 
+/**
+   Maximal permitted tablesize if DGS_DISC_GAUSS_DEFAULT is chosen.
+*/
+
+#define DGS_DISC_GAUSS_MAX_TABLE_SIZE_BYTES (1<<16)
 
 /**
    Discrete Gaussian `D_{σ₂,0}` with `σ₂ := sqrt(1/(2·log(2)))`.
