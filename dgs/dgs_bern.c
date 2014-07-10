@@ -119,7 +119,7 @@ dgs_bern_exp_mp_t* dgs_bern_exp_mp_init(mpfr_t f, size_t l) {
   for(size_t i=0; i<l; i++) {
     mpfr_exp(tmp2, tmp, MPFR_RNDN);
     if (mpfr_zero_p(tmp2)) {
-      self->l = i+1;
+      self->l = i;
       break;
     }
     if (i%DGS_BERN_EXP_ALLOC_BLOCK_SIZE == 0 && i!=0) {
@@ -223,7 +223,7 @@ dgs_bern_exp_dp_t* dgs_bern_exp_dp_init(double f, size_t l) {
   for(size_t i=0; i<l; i++) {
     tmp2 = exp(tmp);
     if (tmp2 == 0.0) {
-      self->l = i+1;
+      self->l = i;
       break;
     }
     if (i%DGS_BERN_EXP_ALLOC_BLOCK_SIZE == 0 && i!=0) {
