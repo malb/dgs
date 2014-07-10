@@ -19,7 +19,7 @@ libdgs_la_LDFLAGS = -release 0.0.$(RELEASE) -no-undefined
 
 check_PROGRAMS=test_gauss_z
 test_gauss_z_SOURCES=tests/test_gauss_z.c
-test_gauss_z_LDFLAGS=-ldgs -lgmp -lmpfr -lm
+test_gauss_z_LDFLAGS=-ldgs -lgmp -lmpfr -lm -no-install
 test_gauss_z_CFLAGS=$(AM_CFLAGS)
 
 TESTS = test_gauss_z
