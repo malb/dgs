@@ -28,3 +28,6 @@ dgs/dgs_bern.lo
 dgs/dgs_gauss_dp.lo
 dgs/dgs_gauss_mp.lo
 libdgs.la
+/test_gauss_z
+/test_gauss_z.trs
+/tests/.dirstamp
