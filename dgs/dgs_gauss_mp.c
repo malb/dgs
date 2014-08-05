@@ -186,10 +186,9 @@ dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(mpfr_t sigma, mpfr_t c, size_t tau, 
     mpfr_clear(k);
 
     double sigma_ = mpfr_get_d(self->sigma, MPFR_RNDN);
-    unsigned long tau_ = mpz_get_ui(self->tau);
 
     /* 1. try the uniform algorithm */
-    if (2*ceil(sigma_*tau_) * sizeof(double) <= DGS_DISC_GAUSS_MAX_TABLE_SIZE_BYTES) {
+    if (2*ceil(sigma_*self->tau) * sizeof(double) <= DGS_DISC_GAUSS_MAX_TABLE_SIZE_BYTES) {
       algorithm = DGS_DISC_GAUSS_UNIFORM_TABLE;
     /* 2. see if sigma2 is close enough */
     } else if(abs(round(k_)-k_) < DGS_DISC_GAUSS_EQUAL_DIFF) {
