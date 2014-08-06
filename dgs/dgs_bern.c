@@ -71,7 +71,8 @@ dgs_bern_mp_t* dgs_bern_mp_init(mpfr_t p) {
   dgs_bern_mp_t *self = malloc(sizeof(dgs_bern_mp_t));
   if (!self) dgs_die("out of memory");
 
-  mpfr_init_set(self->p, p, MPFR_RNDN);
+  mpfr_init2(self->p, mpfr_get_prec(p));
+  mpfr_set(self->p, p, MPFR_RNDN);
   mpfr_init2(self->tmp, mpfr_get_prec(p));
   return self;
 }
@@ -112,7 +113,8 @@ dgs_bern_exp_mp_t* dgs_bern_exp_mp_init(mpfr_t f, size_t l) {
 
   mpfr_t tmp, tmp2;
   mpfr_init2(tmp2, mpfr_get_prec(f));
-  mpfr_init_set(tmp, f, MPFR_RNDN); // f
+  mpfr_init2(tmp, mpfr_get_prec(f));
+  mpfr_set(tmp, f, MPFR_RNDN); // f
   mpfr_pow_si(tmp, tmp, -1, MPFR_RNDN); // 1/f
   mpfr_neg(tmp, tmp, MPFR_RNDN); // -1/f
 
@@ -131,7 +133,8 @@ dgs_bern_exp_mp_t* dgs_bern_exp_mp_init(mpfr_t f, size_t l) {
       if(!self->B) dgs_die("out of memory");
     }
 
-    mpfr_init_set(self->p[i], tmp2, MPFR_RNDN);
+    mpfr_init2(self->p[i], mpfr_get_prec(f));
+    mpfr_set(self->p[i], tmp2, MPFR_RNDN);
     self->B[i] = dgs_bern_mp_init(self->p[i]);
 
     mpfr_mul_ui(tmp, tmp, 2, MPFR_RNDN);
