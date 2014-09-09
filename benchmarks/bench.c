@@ -24,11 +24,12 @@ void print_gauss_z_help(const char *name) {
   printf("      %d -- sample from uniform distribution, exp() calls as Bernoulli oracles\n", DGS_DISC_GAUSS_UNIFORM_LOGTABLE);
   printf("      %d -- sample from k⋅σ2 distribution, exp() calls as Bernoulli oracles \n", DGS_DISC_GAUSS_SIGMA2_LOGTABLE);
   printf(" p -- precision: 0 for double precision, 1 for arbitrary precision\n");
+  printf(" n -- number of trials > 0 (default: 100000)\n");
 }
 
 void parse_gauss_z_cmdline(cmdline_params_gauss_z_t *params, int argc, char *argv[]) {
   int c;
-  while ((c = getopt(argc, argv, "s:t:c:a:p:h")) != -1)
+  while ((c = getopt(argc, argv, "s:t:c:a:p:hn:")) != -1)
     switch (c) {
     case 's':
       params->sigma = atof(optarg); break;
@@ -40,6 +41,8 @@ void parse_gauss_z_cmdline(cmdline_params_gauss_z_t *params, int argc, char *arg
       params->algorithm = atoi(optarg); break;
     case 'p':
       params->precision = atoi(optarg); break;
+    case 'n':
+      params->ntrials = atoi(optarg); break;
     case 'h':
       print_gauss_z_help(argv[0]);
       exit(0);

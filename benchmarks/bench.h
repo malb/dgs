@@ -13,6 +13,7 @@ typedef struct {
   double c;
   dgs_disc_gauss_alg_t algorithm;
   int precision;
+  size_t ntrials;
 } cmdline_params_gauss_z_t;
 
 

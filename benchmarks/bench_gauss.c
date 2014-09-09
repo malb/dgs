@@ -26,7 +26,7 @@ double run_dp(double sigma, double c, int tau, dgs_disc_gauss_alg_t alg, size_t 
 }
 
 double run_mp(double sigma_, double c_, int tau, dgs_disc_gauss_alg_t alg, size_t ntrials, unsigned long long *t) {
-  mpfr_set_default_prec(53);
+  mpfr_set_default_prec(80);
   mpfr_t sigma;
   mpfr_init_set_d(sigma, sigma_, MPFR_RNDN);
   gmp_randstate_t state;
@@ -78,13 +78,13 @@ const char *alg_to_str(dgs_disc_gauss_alg_t alg) {
 int main(int argc, char *argv[]) {
   const double sigma2 = sqrt(1.0/(2.0*log(2.0)));
   
-  const size_t ntrials = 1024*1024;
   unsigned long long t;
 
   cmdline_params_gauss_z_t params;
   params.sigma = 2 * sigma2;
   params.tau = 6;
   params.c = 0;
+  params.ntrials = 10000000;
   params.algorithm = DGS_DISC_GAUSS_UNIFORM_TABLE;
   params.precision = MP;
 
@@ -99,10 +99,10 @@ int main(int argc, char *argv[]) {
   printf("%s :: σ: %.2f, c: %.2f. τ: %ld, precision: %d, algorithm: %d -- ", argv[0],
          params.sigma, params.c, params.tau, params.precision, params.algorithm);
   
-  run(params.sigma, params.c, params.tau, params.precision, params.algorithm, ntrials, &t);
-  double walltime = t/100000.0/ntrials*(1000.0*1000.0); // ms
+  run(params.sigma, params.c, params.tau, params.precision, params.algorithm, params.ntrials, &t);
+  double walltime = t/100000.0/params.ntrials*(1000.0*1000.0); // μs
 
-  printf("wall time: %8.3f ms per call\n", walltime);
+  printf("wall time: %8.3f μs per call (rate: %8.3f per second)\n", walltime, 1000.0*1000.0/walltime);
 
   mpfr_free_cache();
   
