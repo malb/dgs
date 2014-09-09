@@ -65,8 +65,8 @@ void dgs_bern_uniform_clear(dgs_bern_uniform_t *self) {
  */
 
 dgs_bern_mp_t* dgs_bern_mp_init(mpfr_t p) {
-  /* we allow 0 here for low precision */
-  assert((mpfr_cmp_d(p, 0.0) >= 0) && (mpfr_cmp_d(p, 1.0) < 0));
+  /* we allow 0 and 1 here for low precision */
+  assert((mpfr_cmp_d(p, 0.0) >= 0) && (mpfr_cmp_d(p, 1.0) <= 0));
 
   dgs_bern_mp_t *self = malloc(sizeof(dgs_bern_mp_t));
   if (!self) dgs_die("out of memory");
