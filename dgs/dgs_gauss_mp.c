@@ -145,7 +145,7 @@ static inline void _dgs_disc_gauss_mp_init_bexp(dgs_disc_gauss_mp_t *self, mpfr_
   self->Bexp = dgs_bern_exp_mp_init(self->f, l);
 }
 
-dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(mpfr_t sigma, mpfr_t c, size_t tau, dgs_disc_gauss_alg_t algorithm) {
+dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(const mpfr_t sigma, const mpfr_t c, size_t tau, dgs_disc_gauss_alg_t algorithm) {
   if (mpfr_cmp_ui(sigma,0)<= 0)
     dgs_die("sigma must be > 0");
   if (tau == 0)

@@ -532,7 +532,7 @@ typedef struct _dgs_disc_gauss_mp_t {
 
 } dgs_disc_gauss_mp_t;
 
-dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(mpfr_t sigma, mpfr_t c, size_t tau, dgs_disc_gauss_alg_t algorithm);
+dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(const mpfr_t sigma, const mpfr_t c, size_t tau, dgs_disc_gauss_alg_t algorithm);
 
 /**
    Sample from ``dgs_disc_gauss_mp_t`` by rejection sampling using the uniform
