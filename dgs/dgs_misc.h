@@ -75,10 +75,10 @@ static inline unsigned long _dgs_randomb_libc(size_t nbits) {
 
 static inline unsigned long _dgs_randomm_libc(unsigned long n) {
   assert(n < RAND_MAX);
-  long r;
+  unsigned long r;
   unsigned long k = RAND_MAX/n;
   do {
-    r = random();
+    r = (unsigned long)random();
   } while (r >= k*n);
   return r%n;
 }
