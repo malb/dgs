@@ -433,5 +433,12 @@ void dgs_disc_gauss_mp_clear(dgs_disc_gauss_mp_t *self) {
     }
     free(self->rho);
   }
+  if (self->upper_bound)
+    mpz_clear(self->upper_bound);
+  if (self->upper_bound_minus_one)
+    mpz_clear(self->upper_bound_minus_one);
+  if (self->two_upper_bound_minus_one)
+    mpz_clear(self->two_upper_bound_minus_one);
+
   free(self);
 }
