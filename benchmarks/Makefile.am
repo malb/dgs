@@ -1,6 +1,6 @@
 BENCHCFLAGS = $(AM_CFLAGS)  -I.. @CFLAGS@ -DNDEBUG
 BENCHLIBADD = -lgmp -lmpfr -lm
-BENCHLDFLAGS = -Wl,-rpath,../.libs/ ../.libs/libdgs.so
+BENCHLDFLAGS = -Wl,-rpath,../.libs/ ../.libs/libdgs.la
 
 EXTRA_PROGRAMS = bench_gauss
 
