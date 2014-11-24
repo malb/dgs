@@ -426,6 +426,7 @@ void dgs_disc_gauss_mp_clear(dgs_disc_gauss_mp_t *self) {
   mpfr_clear(self->z);
   mpfr_clear(self->c);
   mpfr_clear(self->c_r);
+  mpz_clear(self->y_z);
   mpz_clear(self->c_z);
   if (self->rho) {
     for(unsigned long x=0; x<mpz_get_ui(self->upper_bound); x++) {
