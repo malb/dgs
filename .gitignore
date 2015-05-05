@@ -32,4 +32,5 @@ dgs/*.o
 libdgs.la
 /test_gauss_z
 /test_gauss_z.trs
+/tests/test_gauss_z-test_gauss_z.o
 /tests/.dirstamp
