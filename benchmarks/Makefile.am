@@ -11,7 +11,7 @@ all: bench_gauss
 clean-local:
 	-rm -f $(EXTRA_PROGRAMS)
 
-bench_gauss_SOURCES=bench_gauss.c bench.c
+bench_gauss_SOURCES=bench_gauss.c bench.c bench.h
 bench_gauss_CFLAGS=${BENCHCFLAGS}
 bench_gauss_LDFLAGS=${BENCHLDFLAGS} ${BENCHLIBADD}
 
