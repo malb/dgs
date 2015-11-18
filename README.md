@@ -1,11 +1,37 @@
 # Discrete Gaussians over the Integers #
 
+[![Build Status](https://drone.io/bitbucket.org/malb/dgs/status.png)](https://drone.io/bitbucket.org/malb/dgs/latest)
+
 A discrete Gaussian distribution on the Integers is a distribution where the
 integer $x$ is sampled with probability proportional to $exp(-(x-c)²/(2σ²))$.
 It is denoted by $D_{σ,c}$ where `σ` is the width parameter (close to the
 standard deviation) and $c$ is the center.
 
 This library samples from this distributions.
+
+## Installation ##
+
+You can either clone this repository or download a
+[release tarball](https://drone.io/bitbucket.org/malb/dgs/files). The latter
+includes a `configure` script.
+
+Hence, if you cloned the repository do
+
+    mkdir m4
+    autoreconf -i
+    mkdir m4
+    autoreconf -i
+    ./configure
+    make
+    make check
+
+If you downloaded the
+[release tarball](https://drone.io/bitbucket.org/malb/dgs/files) then the
+following will suffice:
+
+    ./configure
+    make
+    make check
 
 ## Algorithms ##
 
