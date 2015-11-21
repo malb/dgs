@@ -47,6 +47,7 @@
 /** A hack around the missing random() and drand48 in Windows */
 #ifndef lrand48
 #if defined(__MINGW32__) || defined(__MINGW64__) || defined(WIN32)
+#warning "Hacking around missing random and drand48 by using rand()"
 #define drand48() (((double)rand()) / RAND_MAX)
 #define lrand48() rand()
 #define random() rand()
