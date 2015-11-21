@@ -44,6 +44,15 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+/** A hack around the missing random() and drand48 in Windows */
+#ifndef lrand48
+#if defined(__MINGW32__) || defined(__MINGW64__) || defined(WIN32)
+#define drand48() (((double)rand()) / RAND_MAX)
+#define lrand48() rand()
+#define random() rand()
+#endif
+#endif
+
 /**
  * \brief Macro to help with branch prediction.
  */
