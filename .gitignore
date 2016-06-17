@@ -35,3 +35,4 @@ libdgs.la
 /tests/test_gauss_z-test_gauss_z.o
 /tests/.dirstamp
 /dgs/config.h.in~
+/dgs/config.h.in
