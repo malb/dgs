@@ -159,6 +159,11 @@ dgs_disc_gauss_dp_t *dgs_disc_gauss_dp_init(double sigma, double c, size_t tau, 
     break;
   }
 
+  case DGS_DISC_GAUSS_ALIAS: {
+    dgs_die("not implemented");
+    break;
+  }
+  
   default:
     dgs_disc_gauss_dp_clear(self);
     dgs_die("unknown algorithm %d", algorithm);
@@ -201,6 +206,10 @@ long dgs_disc_gauss_dp_call_uniform_table_offset(dgs_disc_gauss_dp_t *self) {
   } while (y >= self->rho[x]);
 
   return x + self->c_z - self->upper_bound_minus_one;
+}
+
+long dgs_disc_gauss_dp_call_alias(dgs_disc_gauss_dp_t *self) {
+  dgs_die("not implemented");
 }
 
 long dgs_disc_gauss_dp_call_uniform_logtable(dgs_disc_gauss_dp_t *self) {

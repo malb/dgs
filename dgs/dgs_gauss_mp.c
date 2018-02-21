@@ -324,6 +324,14 @@ dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(const mpfr_t sigma, const mpfr_t c, 
     break;
   }
 
+  case DGS_DISC_GAUSS_ALIAS: {
+    
+    
+    free(self);
+    dgs_die("not implemented");
+    break;
+  }
+
   default:
     free(self);
     dgs_die("unknown algorithm %d", algorithm);
@@ -358,6 +366,10 @@ void dgs_disc_gauss_mp_call_uniform_table(mpz_t rop, dgs_disc_gauss_mp_t *self, 
   mpz_set_ui(rop, x);
   mpz_sub(rop, rop, self->upper_bound_minus_one);
   mpz_add(rop, rop, self->c_z);
+}
+
+void dgs_disc_gauss_mp_call_alias(mpz_t rop, dgs_disc_gauss_mp_t *self, gmp_randstate_t state) {
+  dgs_die("not implemented");
 }
 
 void dgs_disc_gauss_mp_call_uniform_online(mpz_t rop, dgs_disc_gauss_mp_t *self, gmp_randstate_t state) {

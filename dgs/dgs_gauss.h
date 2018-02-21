@@ -122,6 +122,7 @@ typedef enum {
   DGS_DISC_GAUSS_UNIFORM_TABLE     = 0x2, //<call dgs_disc_gauss_mp_call_uniform_table
   DGS_DISC_GAUSS_UNIFORM_LOGTABLE  = 0x3, //<call dgs_disc_gauss_mp_call_uniform_logtable
   DGS_DISC_GAUSS_SIGMA2_LOGTABLE   = 0x7, //<call dgs_disc_gauss_mp_call_sigma2_logtable
+  DGS_DISC_GAUSS_ALIAS             = 0x8,
 } dgs_disc_gauss_alg_t;
 
 /**
@@ -352,6 +353,7 @@ long dgs_disc_gauss_dp_call_uniform_table(dgs_disc_gauss_dp_t *self);
 
 long dgs_disc_gauss_dp_call_uniform_table_offset(dgs_disc_gauss_dp_t *self);
 
+long dgs_disc_gauss_dp_call_alias(dgs_disc_gauss_dp_t *self);
 
 /**
   Sample from ``dgs_disc_gauss_dp_t`` by rejection sampling using the uniform
@@ -562,6 +564,8 @@ void dgs_disc_gauss_mp_call_uniform_table(mpz_t rop, dgs_disc_gauss_mp_t *self, 
  */
 
 void dgs_disc_gauss_mp_call_uniform_table_offset(mpz_t rop, dgs_disc_gauss_mp_t *self, gmp_randstate_t state);
+
+void dgs_disc_gauss_mp_call_alias(mpz_t rop, dgs_disc_gauss_mp_t *self, gmp_randstate_t state);
 
 /**
   Sample from ``dgs_disc_gauss_mp_t`` by rejection sampling using the uniform
