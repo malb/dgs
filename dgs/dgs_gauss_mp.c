@@ -542,7 +542,10 @@ void dgs_disc_gauss_mp_clear(dgs_disc_gauss_mp_t *self) {
   mpz_clear(self->y_z);
   mpz_clear(self->c_z);
   if (self->rho) {
-    for(unsigned long x=0; x<mpz_get_ui(self->upper_bound); x++) {
+    unsigned long range = mpz_get_ui(self->two_upper_bound_minus_one);
+    if (self->call == dgs_disc_gauss_mp_call_uniform_table)
+      range = mpz_get_ui(self->upper_bound);
+    for(unsigned long x=0; x<range; x++) {
       mpfr_clear(self->rho[x]);
     }
     free(self->rho);
