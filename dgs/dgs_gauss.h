@@ -361,6 +361,13 @@ long dgs_disc_gauss_dp_call_uniform_table(dgs_disc_gauss_dp_t *self);
 
 long dgs_disc_gauss_dp_call_uniform_table_offset(dgs_disc_gauss_dp_t *self);
 
+/**
+   Sample from ``dgs_disc_gauss_dp_t`` by alias sampling. This is extremely fast, 
+   but requires more resources and setup cost is around (2τσ)².
+
+   :param self: discrete Gaussian sampler
+ */
+
 long dgs_disc_gauss_dp_call_alias(dgs_disc_gauss_dp_t *self);
 
 /**
@@ -539,6 +546,13 @@ typedef struct _dgs_disc_gauss_mp_t {
   */
 
   mpfr_t *rho;
+  
+    /**
+   * Tables required for alias sampling.
+   */
+   
+  mpz_t* alias;
+  dgs_bern_mp_t** bias;
 
 } dgs_disc_gauss_mp_t;
 
@@ -573,6 +587,12 @@ void dgs_disc_gauss_mp_call_uniform_table(mpz_t rop, dgs_disc_gauss_mp_t *self, 
 
 void dgs_disc_gauss_mp_call_uniform_table_offset(mpz_t rop, dgs_disc_gauss_mp_t *self, gmp_randstate_t state);
 
+/**
+   Sample from ``dgs_disc_gauss_mp_t`` by alias sampling. This is extremely fast, 
+   but requires more resources and setup cost is around (2τσ)².
+
+   :param self: discrete Gaussian sampler
+ */
 void dgs_disc_gauss_mp_call_alias(mpz_t rop, dgs_disc_gauss_mp_t *self, gmp_randstate_t state);
 
 /**

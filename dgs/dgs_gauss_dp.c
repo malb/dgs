@@ -214,6 +214,9 @@ dgs_disc_gauss_dp_t *dgs_disc_gauss_dp_init(double sigma, double c, size_t tau, 
     self->bias = (dgs_bern_dp_t**)malloc(sizeof(dgs_bern_dp_t*)*self->two_upper_bound_minus_one);
     
     // simple robin hood strategy approximates good alias
+    // this precomputation takes ~n^2, but could be reduced by 
+    // using better data structures to compute min and max 
+    // (instead of just linear search each time)
     double avg = 1.0 / ((double)self->two_upper_bound_minus_one);
     long low = _dgs_disc_gauss_dp_min_in_rho(self);
     long high;

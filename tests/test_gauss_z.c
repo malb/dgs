@@ -186,6 +186,7 @@ int main(int argc, char *argv[]) {
   test_mean_dp(10.0, 0.0, 6, DGS_DISC_GAUSS_ALIAS);
   test_mean_dp( 3.3, 1.0, 6, DGS_DISC_GAUSS_ALIAS);
   test_mean_dp( 2.0, 2.0, 6, DGS_DISC_GAUSS_ALIAS);
+  test_mean_dp( 2.0, 1.347, 6, DGS_DISC_GAUSS_ALIAS);
 
   printf("\n");
 
