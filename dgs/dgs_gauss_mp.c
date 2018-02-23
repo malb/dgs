@@ -381,13 +381,13 @@ dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(const mpfr_t sigma, const mpfr_t c, 
     }
     
     // compute bias and alias
-    self->alias = (mpz_t*)malloc(sizeof(mpz_t)*range);
+    self->alias = (mpz_t*)calloc(range, sizeof(mpz_t));
     if (!self->alias){
       dgs_disc_gauss_mp_clear(self);
       dgs_die("out of memory");
     }
     
-    self->bias = (dgs_bern_mp_t**)malloc(sizeof(dgs_bern_mp_t*)*range);
+    self->bias = (dgs_bern_mp_t**)calloc(range, sizeof(dgs_bern_mp_t*));
     if (!self->bias){
       dgs_disc_gauss_mp_clear(self);
       dgs_die("out of memory");
@@ -465,10 +465,13 @@ void dgs_disc_gauss_mp_call_alias(mpz_t rop, dgs_disc_gauss_mp_t *self, gmp_rand
   unsigned long x = mpz_get_ui(rop);
   if (self->bias[x]) {
     if (!dgs_bern_mp_call(self->bias[x], state)) {
+      if (!self->alias[x]) {
+        free(self);
+        dgs_die("bias initialized but no alias!");
+      }
       mpz_set(rop, self->alias[x]);
     }
   }
-  
   mpz_sub(rop, rop, self->upper_bound_minus_one);
   mpz_add(rop, rop, self->c_z);
 }
