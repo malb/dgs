@@ -113,18 +113,22 @@ int main(int argc, char *argv[]) {
   test_ratios_dp( 3.0, 6, DGS_DISC_GAUSS_UNIFORM_TABLE);
   test_ratios_dp( 3.0, 6, DGS_DISC_GAUSS_UNIFORM_LOGTABLE);
   test_ratios_dp( 3.0, 6, DGS_DISC_GAUSS_SIGMA2_LOGTABLE);
+  test_ratios_dp( 3.0, 6, DGS_DISC_GAUSS_ALIAS);
   test_ratios_dp( 2.0, 6, DGS_DISC_GAUSS_UNIFORM_ONLINE);
   test_ratios_dp( 2.0, 6, DGS_DISC_GAUSS_UNIFORM_TABLE);
   test_ratios_dp( 2.0, 6, DGS_DISC_GAUSS_UNIFORM_LOGTABLE);
   test_ratios_dp( 2.0, 6, DGS_DISC_GAUSS_SIGMA2_LOGTABLE);
+  test_ratios_dp( 2.0, 6, DGS_DISC_GAUSS_ALIAS);
   test_ratios_dp( 4.0, 3, DGS_DISC_GAUSS_UNIFORM_ONLINE);
   test_ratios_dp( 4.0, 3, DGS_DISC_GAUSS_UNIFORM_TABLE);
   test_ratios_dp( 4.0, 3, DGS_DISC_GAUSS_UNIFORM_LOGTABLE);
   test_ratios_dp( 4.0, 3, DGS_DISC_GAUSS_SIGMA2_LOGTABLE);
+  test_ratios_dp( 4.0, 3, DGS_DISC_GAUSS_ALIAS);
   test_ratios_dp(15.4, 3, DGS_DISC_GAUSS_UNIFORM_ONLINE);
   test_ratios_dp(15.4, 3, DGS_DISC_GAUSS_UNIFORM_TABLE);
   test_ratios_dp(15.4, 3, DGS_DISC_GAUSS_UNIFORM_LOGTABLE);
   test_ratios_dp(15.4, 3, DGS_DISC_GAUSS_SIGMA2_LOGTABLE);
+  test_ratios_dp(15.4, 3, DGS_DISC_GAUSS_ALIAS);
   printf("\n");
 
   printf("# testing [⌊c⌋-⌈στ⌉,…, ⌊c⌋+⌈στ⌉] boundaries #\n");
@@ -144,6 +148,12 @@ int main(int argc, char *argv[]) {
   test_uniform_boundaries_dp(10.0, 0.0, 2, DGS_DISC_GAUSS_UNIFORM_LOGTABLE);
   test_uniform_boundaries_dp( 3.3, 1.0, 1, DGS_DISC_GAUSS_UNIFORM_LOGTABLE);
   test_uniform_boundaries_dp( 2.0, 2.0, 2, DGS_DISC_GAUSS_UNIFORM_LOGTABLE);
+  printf("\n");
+  
+  test_uniform_boundaries_dp( 3.0, 0.0, 2, DGS_DISC_GAUSS_ALIAS);
+  test_uniform_boundaries_dp(10.0, 0.0, 2, DGS_DISC_GAUSS_ALIAS);
+  test_uniform_boundaries_dp( 3.3, 1.0, 1, DGS_DISC_GAUSS_ALIAS);
+  test_uniform_boundaries_dp( 2.0, 2.0, 2, DGS_DISC_GAUSS_ALIAS);
   printf("\n");
 
   printf("# testing c is center #\n");
@@ -169,6 +179,14 @@ int main(int argc, char *argv[]) {
   test_mean_dp(10.0, 0.0, 6, DGS_DISC_GAUSS_SIGMA2_LOGTABLE);
   test_mean_dp( 3.3, 1.0, 6, DGS_DISC_GAUSS_SIGMA2_LOGTABLE);
   test_mean_dp( 2.0, 2.0, 6, DGS_DISC_GAUSS_SIGMA2_LOGTABLE);
+
+  printf("\n");
+  
+  test_mean_dp( 3.0, 0.0, 6, DGS_DISC_GAUSS_ALIAS);
+  test_mean_dp(10.0, 0.0, 6, DGS_DISC_GAUSS_ALIAS);
+  test_mean_dp( 3.3, 1.0, 6, DGS_DISC_GAUSS_ALIAS);
+  test_mean_dp( 2.0, 2.0, 6, DGS_DISC_GAUSS_ALIAS);
+  test_mean_dp( 2.0, 1.347, 6, DGS_DISC_GAUSS_ALIAS);
 
   printf("\n");
 

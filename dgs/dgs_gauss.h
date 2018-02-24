@@ -112,6 +112,7 @@
 
 #define DGS_DISC_GAUSS_EQUAL_DIFF 0.001
 
+#define DGS_DISC_GAUSS_STRONG_EQUAL_DIFF pow(2, -45)
 /**
    Available Algorithms
 */
@@ -122,6 +123,7 @@ typedef enum {
   DGS_DISC_GAUSS_UNIFORM_TABLE     = 0x2, //<call dgs_disc_gauss_mp_call_uniform_table
   DGS_DISC_GAUSS_UNIFORM_LOGTABLE  = 0x3, //<call dgs_disc_gauss_mp_call_uniform_logtable
   DGS_DISC_GAUSS_SIGMA2_LOGTABLE   = 0x7, //<call dgs_disc_gauss_mp_call_sigma2_logtable
+  DGS_DISC_GAUSS_ALIAS             = 0x8, //<call dgs_disc_gauss_mp_call_alias
 } dgs_disc_gauss_alg_t;
 
 /**
@@ -302,6 +304,13 @@ typedef struct _dgs_disc_gauss_dp_t {
   */
 
   double *rho;
+  
+  /**
+   * Tables required for alias sampling.
+   */
+   
+  long* alias;
+  dgs_bern_dp_t** bias;
 } dgs_disc_gauss_dp_t;
 
 /**
@@ -352,6 +361,14 @@ long dgs_disc_gauss_dp_call_uniform_table(dgs_disc_gauss_dp_t *self);
 
 long dgs_disc_gauss_dp_call_uniform_table_offset(dgs_disc_gauss_dp_t *self);
 
+/**
+   Sample from ``dgs_disc_gauss_dp_t`` by alias sampling. This is extremely fast, 
+   but requires more resources and setup cost is around (2τσ)².
+
+   :param self: discrete Gaussian sampler
+ */
+
+long dgs_disc_gauss_dp_call_alias(dgs_disc_gauss_dp_t *self);
 
 /**
   Sample from ``dgs_disc_gauss_dp_t`` by rejection sampling using the uniform
@@ -529,6 +546,13 @@ typedef struct _dgs_disc_gauss_mp_t {
   */
 
   mpfr_t *rho;
+  
+    /**
+   * Tables required for alias sampling.
+   */
+   
+  mpz_t* alias;
+  dgs_bern_mp_t** bias;
 
 } dgs_disc_gauss_mp_t;
 
@@ -562,6 +586,14 @@ void dgs_disc_gauss_mp_call_uniform_table(mpz_t rop, dgs_disc_gauss_mp_t *self, 
  */
 
 void dgs_disc_gauss_mp_call_uniform_table_offset(mpz_t rop, dgs_disc_gauss_mp_t *self, gmp_randstate_t state);
+
+/**
+   Sample from ``dgs_disc_gauss_mp_t`` by alias sampling. This is extremely fast, 
+   but requires more resources and setup cost is around (2τσ)².
+
+   :param self: discrete Gaussian sampler
+ */
+void dgs_disc_gauss_mp_call_alias(mpz_t rop, dgs_disc_gauss_mp_t *self, gmp_randstate_t state);
 
 /**
   Sample from ``dgs_disc_gauss_mp_t`` by rejection sampling using the uniform

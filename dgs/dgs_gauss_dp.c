@@ -41,6 +41,42 @@ static inline void _dgs_disc_gauss_dp_init_bexp(dgs_disc_gauss_dp_t *self, doubl
   self->Bexp = dgs_bern_exp_dp_init(self->f, l);
 }
 
+static inline void _dgs_disc_gauss_dp_init_rho(dgs_disc_gauss_dp_t *self) {
+  self->rho = (double*)malloc(sizeof(double)*self->two_upper_bound_minus_one);
+  if (!self->rho){
+    dgs_disc_gauss_dp_clear(self);
+    dgs_die("out of memory");
+  }
+  long absmax = self->upper_bound_minus_one;
+  for(long x=-absmax; x<=absmax; x++) {
+    self->rho[x+self->upper_bound_minus_one] = exp( (((double)x) - self->c_r) * (((double)x) - self->c_r) * self->f);
+  }
+}
+
+static inline long _dgs_disc_gauss_dp_min_in_rho(dgs_disc_gauss_dp_t *self) {
+  long mi = 0;
+  double m = self->rho[mi];
+  for (long x = 1; x < self->two_upper_bound_minus_one;++x) {
+    if (self->rho[x] < m) {
+      mi = x;
+      m = self->rho[mi];
+    }
+  }
+  return mi;
+}
+
+static inline long _dgs_disc_gauss_dp_max_in_rho(dgs_disc_gauss_dp_t *self) {
+  long mi = 0;
+  double m = self->rho[mi];
+  for (long x = 1; x < self->two_upper_bound_minus_one;++x) {
+    if (self->rho[x] > m) {
+      mi = x;
+      m = self->rho[mi];
+    }
+  }
+  return mi;
+}
+
 dgs_disc_gauss_dp_t *dgs_disc_gauss_dp_init(double sigma, double c, size_t tau, dgs_disc_gauss_alg_t algorithm) {
   if (sigma <= 0.0)
     dgs_die("sigma must be > 0");
@@ -110,15 +146,7 @@ dgs_disc_gauss_dp_t *dgs_disc_gauss_dp_init(double sigma, double c, size_t tau, 
       self->rho[0]/= 2.0;
     } else {
       self->call = dgs_disc_gauss_dp_call_uniform_table_offset;
-      self->rho = (double*)malloc(sizeof(double)*self->two_upper_bound_minus_one);
-      if (!self->rho){
-        dgs_disc_gauss_dp_clear(self);
-        dgs_die("out of memory");
-      }
-      long absmax = self->upper_bound_minus_one;
-      for(long x=-absmax; x<=absmax; x++) {
-        self->rho[x+self->upper_bound_minus_one] = exp( (((double)x) - self->c_r) * (((double)x) - self->c_r) * self->f);
-      }
+      _dgs_disc_gauss_dp_init_rho(self);
     }
     break;
 
@@ -159,6 +187,53 @@ dgs_disc_gauss_dp_t *dgs_disc_gauss_dp_init(double sigma, double c, size_t tau, 
     break;
   }
 
+  case DGS_DISC_GAUSS_ALIAS: {
+    self->call = dgs_disc_gauss_dp_call_alias;
+
+    upper_bound = ceil(self->sigma*tau) + 1;
+    self->upper_bound = upper_bound;
+    self->upper_bound_minus_one = upper_bound - 1;
+    self->two_upper_bound_minus_one = 2*upper_bound - 1;
+    self->B = dgs_bern_uniform_init(0);
+    self->f = -1.0/(2.0*(sigma*sigma));
+    
+    _dgs_disc_gauss_dp_init_rho(self);
+    
+    // convert rho to probabilities
+    double sum = 0;
+    for(long x=0; x<self->two_upper_bound_minus_one; x++) {
+      sum += self->rho[x];
+    }
+    sum = 1/sum;
+    for(long x=0; x<self->two_upper_bound_minus_one; x++) {
+      self->rho[x] *= sum;
+    }
+    
+    // compute bias and alias
+    self->alias = (long*)malloc(sizeof(long)*self->two_upper_bound_minus_one);
+    self->bias = (dgs_bern_dp_t**)malloc(sizeof(dgs_bern_dp_t*)*self->two_upper_bound_minus_one);
+    
+    // simple robin hood strategy approximates good alias
+    // this precomputation takes ~n^2, but could be reduced by 
+    // using better data structures to compute min and max 
+    // (instead of just linear search each time)
+    double avg = 1.0 / ((double)self->two_upper_bound_minus_one);
+    long low = _dgs_disc_gauss_dp_min_in_rho(self);
+    long high;
+    while (avg - self->rho[low] > DGS_DISC_GAUSS_STRONG_EQUAL_DIFF) {
+      high = _dgs_disc_gauss_dp_max_in_rho(self);
+      
+      self->bias[low] = dgs_bern_dp_init(self->two_upper_bound_minus_one*self->rho[low]);
+      self->alias[low] = high;
+      self->rho[high] -= (avg - self->rho[low]);
+      self->rho[low] = avg;
+      
+      low = _dgs_disc_gauss_dp_min_in_rho(self);
+    }
+    
+    break;
+  }
+  
   default:
     dgs_disc_gauss_dp_clear(self);
     dgs_die("unknown algorithm %d", algorithm);
@@ -203,6 +278,17 @@ long dgs_disc_gauss_dp_call_uniform_table_offset(dgs_disc_gauss_dp_t *self) {
   return x + self->c_z - self->upper_bound_minus_one;
 }
 
+long dgs_disc_gauss_dp_call_alias(dgs_disc_gauss_dp_t *self) {
+  long x = _dgs_randomm_libc(self->two_upper_bound_minus_one);
+  if (self->bias[x]) {
+    if (!dgs_bern_dp_call(self->bias[x])) {
+      x = self->alias[x];
+    }
+  }
+  
+  return x + self->c_z - self->upper_bound_minus_one;
+}
+
 long dgs_disc_gauss_dp_call_uniform_logtable(dgs_disc_gauss_dp_t *self) {
   long x;
   do {
@@ -239,5 +325,15 @@ void dgs_disc_gauss_dp_clear(dgs_disc_gauss_dp_t *self) {
   if (self->B) dgs_bern_uniform_clear(self->B);
   if (self->Bexp) dgs_bern_exp_dp_clear(self->Bexp);
   if (self->rho) free(self->rho);
+  if (self->alias) free(self->alias);
+  if (self->bias) {
+    for(long x=0; x<self->two_upper_bound_minus_one; x++) {
+      if (self->bias[x]) {
+        free(self->bias[x]);
+      }
+    }
+    free(self->bias);
+  }
+  
   free(self);
 }
