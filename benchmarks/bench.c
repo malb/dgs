@@ -68,6 +68,7 @@ void print_rround_z_help(const char *name) {
   printf(" c -- center of Gaussian distribution. double\n");
   printf(" a -- algorithm:\n");
   printf("      %d -- sample from uniform distribution, call exp()\n", DGS_RROUND_UNIFORM_ONLINE);
+  printf("      %d -- Karney's algorithm\n", DGS_RROUND_KARNEY);
   printf(" p -- precision: 0 for double precision, 1 for arbitrary precision\n");
   printf(" n -- number of trials > 0 (default: 100000)\n");
 }

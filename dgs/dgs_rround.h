@@ -50,6 +50,7 @@
 typedef enum {
   DGS_RROUND_DEFAULT           = 0x0, //<pick algorithm
   DGS_RROUND_UNIFORM_ONLINE    = 0x1, //<call dgs_disc_gauss_mp_call_uniform_online
+  DGS_RROUND_KARNEY            = 0x2, //<call dgs_disc_gauss_mp_call_karney
 } dgs_rround_alg_t;
 
 struct _dgs_rround_mp_t;
@@ -63,6 +64,9 @@ typedef struct _dgs_rround_dp_t {
   */
 
   size_t tau;
+
+  dgs_bern_uniform_t *B;
+  dgs_bern_dp_t *B_half_exp;
 
   dgs_rround_alg_t algorithm;  //<  which algorithm to use
 
@@ -99,6 +103,14 @@ dgs_rround_dp_t *dgs_rround_dp_init(size_t tau, dgs_rround_alg_t algorithm);
  */
 
 long dgs_rround_dp_call_uniform_online(dgs_rround_dp_t *self, double sigma, double c);
+ 
+  /**
+   Sample from ``dgs_rround_dp_t`` using Karney's algorithm. This is similar
+   to the sigma2 method, but can sample from any c and σ.
+
+   :param self: discrete Gaussian sampler
+ */
+long dgs_rround_dp_call_karney(dgs_rround_dp_t *self, double sigma, double c);
 
 /**
    Free memory.
@@ -106,7 +118,6 @@ long dgs_rround_dp_call_uniform_online(dgs_rround_dp_t *self, double sigma, doub
    :param self: discrete Gaussian rounder
 
  */
-
 void dgs_rround_dp_clear(dgs_rround_dp_t *self);
 
 
