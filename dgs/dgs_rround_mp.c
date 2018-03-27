@@ -47,16 +47,13 @@ static inline void _dgs_rround_mp_init_f(mpfr_t f, const mpfr_t sigma) {
 static inline void _dgs_rround_mp_init_upper_bound(mpz_t upper_bound,
                                                        mpz_t upper_bound_minus_one,
                                                        mpz_t two_upper_bound_minus_one,
-                                                       const mpfr_t sigma, size_t tailcut) {
-  mpfr_t tmp;
-  mpfr_init2(tmp, mpfr_get_prec(sigma));
+                                                       const mpfr_t sigma, size_t tailcut, mpfr_t tmp) {
   mpfr_mul_ui(tmp, sigma, tailcut, MPFR_RNDN); // tmp = σ·τ
   mpfr_add_ui(tmp, tmp, 1, MPFR_RNDN); // tmp = σ·τ + 1
   mpfr_get_z(upper_bound, tmp, MPFR_RNDU); // upper_bound = ⌈σ·τ + 1⌉
   mpz_sub_ui(upper_bound_minus_one, upper_bound, 1); // upper_bound - 1 = ⌈σ·τ⌉
   mpz_mul_ui(two_upper_bound_minus_one, upper_bound, 2);
   mpz_sub_ui(two_upper_bound_minus_one, two_upper_bound_minus_one, 1); // 2·upper_bound - 1
-  mpfr_clear(tmp);
 }
 
 dgs_rround_mp_t *dgs_rround_mp_init(size_t tau, dgs_rround_alg_t algorithm, mpfr_prec_t prec) {
@@ -72,7 +69,9 @@ dgs_rround_mp_t *dgs_rround_mp_init(size_t tau, dgs_rround_alg_t algorithm, mpfr
 
   mpz_init(self->c_z);
   mpfr_init2(self->c_r, prec);
-
+  
+  mpfr_init2(self->tmp, prec);
+  
   self->tau = tau;
 
   if (algorithm == DGS_RROUND_DEFAULT) {
@@ -108,7 +107,7 @@ void dgs_rround_mp_call_uniform_online(mpz_t rop, dgs_rround_mp_t *self, const m
   _dgs_rround_mp_init_upper_bound(self->upper_bound,
                                         self->upper_bound_minus_one,
                                         self->two_upper_bound_minus_one,
-                                        sigma, self->tau);
+                                        sigma, self->tau, self->tmp);
   _dgs_rround_mp_init_f(self->f, sigma);
   
   do {
@@ -133,6 +132,7 @@ void dgs_rround_mp_clear(dgs_rround_mp_t *self) {
   mpfr_clear(self->z);
   mpfr_clear(self->c_r);
   mpz_clear(self->c_z);
+  mpfr_clear(self->tmp);
   
   if (self->upper_bound)
     mpz_clear(self->upper_bound);

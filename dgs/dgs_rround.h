@@ -181,7 +181,7 @@ typedef struct _dgs_rround_mp_t {
   mpz_t x; //< space for temporary integer
   mpfr_t y; // space for temporary rational number
   mpfr_t z; // space for temporary rational number
-
+  mpfr_t tmp;
 } dgs_rround_mp_t;
 
 dgs_rround_mp_t *dgs_rround_mp_init(size_t tau, dgs_rround_alg_t algorithm, mpfr_prec_t prec);
