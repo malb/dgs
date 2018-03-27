@@ -1,6 +1,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include "dgs/dgs_gauss.h"
+#include "dgs/dgs_rround.h"
 
 #define DP 0
 #define MP 1
@@ -19,3 +20,16 @@ typedef struct {
 
 void parse_gauss_z_cmdline(cmdline_params_gauss_z_t *params, int argc, char *argv[]);
 void print_gauss_z_help(const char *name);
+
+typedef struct {
+  double sigma;
+  long tau;
+  double c;
+  dgs_rround_alg_t algorithm;
+  int precision;
+  size_t ntrials;
+} cmdline_params_rround_z_t;
+
+
+void parse_rround_z_cmdline(cmdline_params_rround_z_t *params, int argc, char *argv[]);
+void print_rround_z_help(const char *name);

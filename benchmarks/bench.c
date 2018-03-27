@@ -57,3 +57,48 @@ void parse_gauss_z_cmdline(cmdline_params_gauss_z_t *params, int argc, char *arg
   if (params->precision != 0 && params->precision != 1)
     dgs_die("precision must be either 0 or 1, but got %d",params->precision);
 }
+
+void print_rround_z_help(const char *name) {
+  //printf("%s:\n\n", name);
+  printf("REQUIRED:\n");
+  printf(" s -- Gaussian width parameter σ, double > 0\n");
+  printf(" t -- cutoff parameter for sampling from uniform distribution,\n");
+  printf("      values outside of [⌊c⌋-⌈στ⌉, ⌊c⌋+⌈στ⌉] are considered to have probability zero.\n");
+  printf("      integer > 0\n");
+  printf(" c -- center of Gaussian distribution. double\n");
+  printf(" a -- algorithm:\n");
+  printf("      %d -- sample from uniform distribution, call exp()\n", DGS_RROUND_UNIFORM_ONLINE);
+  printf(" p -- precision: 0 for double precision, 1 for arbitrary precision\n");
+  printf(" n -- number of trials > 0 (default: 100000)\n");
+}
+
+void parse_rround_z_cmdline(cmdline_params_rround_z_t *params, int argc, char *argv[]) {
+  int c;
+  while ((c = getopt(argc, argv, "s:t:c:a:p:hn:")) != -1)
+    switch (c) {
+    case 's':
+      params->sigma = atof(optarg); break;
+    case 't':
+      params->tau = atol(optarg); break;
+    case 'c':
+      params->c = atof(optarg); break;
+    case 'a':
+      params->algorithm = atoi(optarg); break;
+    case 'p':
+      params->precision = atoi(optarg); break;
+    case 'n':
+      params->ntrials = atoi(optarg); break;
+    case 'h':
+      print_gauss_z_help(argv[0]);
+      exit(0);
+    default:
+      print_gauss_z_help(argv[0]);
+      abort();
+    }
+  if (params->sigma <= 0.0)
+    dgs_die("σ > 0 required, but got σ = %f",params->sigma);
+  if (params->tau <= 0)
+    dgs_die("τ > 0 required, but got τ = %d",params->tau);
+  if (params->precision != 0 && params->precision != 1)
+    dgs_die("precision must be either 0 or 1, but got %d",params->precision);
+}
