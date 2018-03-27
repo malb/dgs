@@ -1,8 +1,8 @@
 /******************************************************************************
 *
-*                        DGS - Discrete Gaussian Rounders
+*                        DGR - Discrete Gaussian Rounders
 *
-* Copyright (c) 2014, Martin Albrecht  <martinralbrecht+dgs@googlemail.com>
+* Copyright (c) 2014, Michael Walter.
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without

@@ -1,14 +1,19 @@
 /**
-   Generic Discrete Gaussian Rounding over the Integers.
+   Discrete Gaussian Rounding over the Integers.
 
    A discrete Gaussian distribution on the Integers is a distribution where the
    integer `x` is sampled with probability proportional to `exp(-(x-c)²/(2σ²))`.
    It is denoted by `D_{σ,c}` where `σ` is the width parameter (close to the
-   standard deviation) and `c` is the center.
+   standard deviation) and `c` is the center. This file contains algorithms 
+   suitable for situations, where for each set of parameters (σ,c) only a small 
+   number of samples are desired. I.e. no precomputation is done during 
+   initialization that depends on the parameters of the distribution. Drawing 
+   samples from such a distribution can be viewed as rounding `c` to a nearby 
+   integer, where 'nearby' is defined by the width parameter `σ`. 
 
    AVAILABLE ALGORITHMS:
 
- - ``DGS_DISC_GAUSS_UNIFORM_ONLINE`` - samples are drawn from a uniform
+ - ``DGS_RROUND_UNIFORM_ONLINE`` - samples are drawn from a uniform
    distribution and accepted with probability proportional to
    `\exp(-(x-c)²/(2σ²))` where `\exp(-(x-c)²/(2σ²))` is computed in each
    invocation. Typically this is very slow. Any real-valued `c` is accepted.
@@ -25,9 +30,9 @@
 
   TYPICAL USAGE::
 
-      dgs_disc_gauss_dp_t *D = dgs_disc_gauss_dp_init(<sigma>, <c>, <tau>, <algorithm>);
-      D->call(D); // as often as needed
-      dgs_disc_gauss_dp_clear(D);
+      dgs_rround_dp_t *D = dgs_rround_dp_init(<tau>, <algorithm>);
+      D->call(D, <sigma>, <c>); // as often as needed
+      dgs_rround_dp_clear(D);
 
    .. author:: Michael Walter
 
@@ -62,9 +67,9 @@ typedef struct _dgs_rround_dp_t {
   dgs_rround_alg_t algorithm;  //<  which algorithm to use
 
   /**
-   Return an ``long`` sampled from this sampler
+   Return an ``long`` sampled from this rounder
 
-   :param self: discrete Gaussian sampler.
+   :param self: discrete Gaussian rounder.
    :param sigma: noise parameter.
    :param c: center.
 
@@ -88,6 +93,8 @@ dgs_rround_dp_t *dgs_rround_dp_init(size_t tau, dgs_rround_alg_t algorithm);
    Sample from ``dgs_rround_dp_t`` by rejection sampling using the uniform distribution
 
    :param self: Discrete Gaussian rounder
+   :param sigma: noise parameter
+   :param c: center
 
  */
 
@@ -117,9 +124,6 @@ void dgs_rround_dp_clear(dgs_rround_dp_t *self);
 
 typedef struct _dgs_rround_mp_t {
 
-  mpfr_t c_r; //< `c_r := c % 1`
-  mpz_t c_z;  //< c_z := c - (c_r)
-
   /**
      Cutoff `τ`, samples outside the range `(⌊c⌉-⌈στ⌉,...,⌊c⌉+⌈στ⌉)` are
      considered to have probability zero. This bound applies to algorithms
@@ -142,17 +146,21 @@ typedef struct _dgs_rround_mp_t {
   void (*call)(mpz_t rop, struct _dgs_rround_mp_t *self, const mpfr_t sigma, const mpfr_t c, gmp_randstate_t state);
 
   /**
+   * Temporary variables:
+   */
+  mpfr_t c_r; //< `c_r := c % 1`
+  mpz_t c_z;  //< c_z := c - (c_r)
+
+  /**
    We sample ``x`` with ``abs(x) < upper_bound`` in
-   ``DGS_DISC_GAUSS_UNIFORM_ONLINE``, ``DGS_DISC_GAUSS_UNIFORM_TABLE`` and
-   ``DGS_DISC_GAUSS_UNIFORM_LOGTABLE``.
+   ``DGS_RROUND_UNIFORM_ONLINE``.
    */
 
   mpz_t upper_bound;
 
   /**
    We sample ``x`` with ``abs(x) <= upper_bound - 1`` in
-   ``DGS_DISC_GAUSS_UNIFORM_ONLINE``, ``DGS_DISC_GAUSS_UNIFORM_TABLE`` and
-   ``DGS_DISC_GAUSS_UNIFORM_LOGTABLE``.
+   ``DGS_RROUND_UNIFORM_ONLINE``.
    */
 
   mpz_t upper_bound_minus_one;
@@ -181,7 +189,11 @@ dgs_rround_mp_t *dgs_rround_mp_init(size_t tau, dgs_rround_alg_t algorithm, mpfr
 /**
   Sample from ``dgs_rround_mp_t`` by rejection sampling using the uniform distribution.
 
+  :param rop: return value
   :param self: discrete Gaussian rounder
+  :param sigma: noise parameter
+  :param c: center
+  :param state: state
 
  */
 

@@ -1,8 +1,8 @@
 /******************************************************************************
 *
-*                        DGS - Discrete Gaussian Samplers
+*                        DGR - Discrete Gaussian Rounders
 *
-* Copyright (c) 2014, Martin Albrecht  <martinralbrecht+dgs@googlemail.com>
+* Copyright (c) 2014, Michael Walter
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -35,8 +35,6 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <math.h>
-
-/** GENERAL SIGMA :: INIT **/
 
 static inline void _dgs_rround_mp_init_f(mpfr_t f, const mpfr_t sigma) {
   mpfr_set(f, sigma, MPFR_RNDN);
@@ -100,8 +98,6 @@ dgs_rround_mp_t *dgs_rround_mp_init(size_t tau, dgs_rround_alg_t algorithm, mpfr
   return self;
 }
 
-/** GENERAL SIGMA :: CALL **/
-
 void dgs_rround_mp_call_uniform_online(mpz_t rop, dgs_rround_mp_t *self, const mpfr_t sigma, const mpfr_t c, gmp_randstate_t state) {
   if (mpfr_cmp_ui(sigma,0)<= 0)
     dgs_die("sigma must be > 0");
@@ -129,9 +125,6 @@ void dgs_rround_mp_call_uniform_online(mpz_t rop, dgs_rround_mp_t *self, const m
   mpz_set(rop, self->x);
   mpz_add(rop, rop, self->c_z);
 }
-
-
-/** GENERAL SIGMA :: CLEAR **/
 
 void dgs_rround_mp_clear(dgs_rround_mp_t *self) {
   mpz_clear(self->x);
