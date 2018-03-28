@@ -16,7 +16,10 @@
  - ``DGS_RROUND_UNIFORM_ONLINE`` - samples are drawn from a uniform
    distribution and accepted with probability proportional to
    `\exp(-(x-c)²/(2σ²))` where `\exp(-(x-c)²/(2σ²))` is computed in each
-   invocation. Typically this is very slow. Any real-valued `c` is accepted.
+   invocation. Typically this is very slow.
+
+ - ``DGS_RROUND_KARNEY`` - Use Karney's algorithm. This is better than 
+   uniform rejection sampling.
 
   AVAILABLE PRECISIONS:
 
@@ -71,7 +74,7 @@ typedef struct _dgs_rround_dp_t {
   dgs_rround_alg_t algorithm;  //<  which algorithm to use
 
   /**
-   Return an ``long`` sampled from this rounder
+   Return a ``long`` sampled from this rounder
 
    :param self: discrete Gaussian rounder.
    :param sigma: noise parameter.
@@ -135,12 +138,14 @@ void dgs_rround_dp_clear(dgs_rround_dp_t *self);
 
 typedef struct _dgs_rround_mp_t {
 
+   dgs_bern_uniform_t *B;
+   dgs_bern_mp_t *B_half_exp;
+
   /**
      Cutoff `τ`, samples outside the range `(⌊c⌉-⌈στ⌉,...,⌊c⌉+⌈στ⌉)` are
      considered to have probability zero. This bound applies to algorithms
      which sample from the uniform distribution.
   */
-
   size_t tau;
 
   dgs_rround_alg_t algorithm; //<  which algorithm to use
@@ -161,6 +166,8 @@ typedef struct _dgs_rround_mp_t {
    */
   mpfr_t c_r; //< `c_r := c % 1`
   mpz_t c_z;  //< c_z := c - (c_r)
+  
+  mpz_t sigma_z;
 
   /**
    We sample ``x`` with ``abs(x) < upper_bound`` in
@@ -209,6 +216,19 @@ dgs_rround_mp_t *dgs_rround_mp_init(size_t tau, dgs_rround_alg_t algorithm, mpfr
  */
 
 void dgs_rround_mp_call_uniform_online(mpz_t rop, dgs_rround_mp_t *self, const mpfr_t sigma, const mpfr_t c, gmp_randstate_t state);
+
+/**
+  Sample from ``dgs_rround_mp_t`` using Karney's algorithm.
+
+  :param rop: return value
+  :param self: discrete Gaussian rounder
+  :param sigma: noise parameter
+  :param c: center
+  :param state: state
+
+ */
+
+void dgs_rround_mp_call_karney(mpz_t rop, dgs_rround_mp_t *self, const mpfr_t sigma, const mpfr_t c, gmp_randstate_t state);
 
 
 /**

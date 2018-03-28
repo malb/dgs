@@ -2,7 +2,7 @@
 *
 *                        DGR - Discrete Gaussian Rounders
 *
-* Copyright (c) 2014, Michael Walter.
+* Copyright (c) 2018, Michael Walter
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -69,7 +69,7 @@ dgs_rround_dp_t *dgs_rround_dp_init(size_t tau, dgs_rround_alg_t algorithm) {
   self->tau = tau;
 
   if (algorithm == DGS_RROUND_DEFAULT) {
-    algorithm = DGS_RROUND_UNIFORM_ONLINE;
+    algorithm = DGS_RROUND_KARNEY;
   }
   self->algorithm = algorithm;
 

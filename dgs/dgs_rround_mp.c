@@ -2,7 +2,7 @@
 *
 *                        DGR - Discrete Gaussian Rounders
 *
-* Copyright (c) 2014, Michael Walter
+* Copyright (c) 2018, Michael Walter
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -56,6 +56,28 @@ static inline void _dgs_rround_mp_init_upper_bound(mpz_t upper_bound,
   mpz_sub_ui(two_upper_bound_minus_one, two_upper_bound_minus_one, 1); // 2·upper_bound - 1
 }
 
+static inline long _dgs_rround_mp_unit_gauss(dgs_rround_mp_t *self, gmp_randstate_t state) {
+  long x;
+  int reject;
+  do {
+    reject = 0;
+    x = 0;
+    while (dgs_bern_mp_call(self->B_half_exp, state))
+      ++x;
+    if (x < 2)
+      return x;
+    
+    for(int i = 0; i < x*(x-1); ++i) {
+      if (dgs_bern_mp_call(self->B_half_exp, state) == 0) {
+        reject = 1;
+        break;
+      }
+    }
+  } while(reject);
+  
+  return x;
+}
+
 dgs_rround_mp_t *dgs_rround_mp_init(size_t tau, dgs_rround_alg_t algorithm, mpfr_prec_t prec) {
   if (tau == 0)
     dgs_die("tau must be > 0");
@@ -73,9 +95,16 @@ dgs_rround_mp_t *dgs_rround_mp_init(size_t tau, dgs_rround_alg_t algorithm, mpfr
   mpfr_init2(self->tmp, prec);
   
   self->tau = tau;
+  
+  mpz_init(self->sigma_z);
+
+  mpfr_init2(self->f, prec);
+  mpz_init(self->upper_bound);
+  mpz_init(self->upper_bound_minus_one);
+  mpz_init(self->two_upper_bound_minus_one);
 
   if (algorithm == DGS_RROUND_DEFAULT) {
-    algorithm = DGS_RROUND_UNIFORM_ONLINE;
+    algorithm = DGS_RROUND_KARNEY;
   }
   self->algorithm = algorithm;
 
@@ -83,13 +112,21 @@ dgs_rround_mp_t *dgs_rround_mp_init(size_t tau, dgs_rround_alg_t algorithm, mpfr
 
   case DGS_RROUND_UNIFORM_ONLINE: {
     self->call = dgs_rround_mp_call_uniform_online;
-    mpfr_init2(self->f, prec);
-    mpz_init(self->upper_bound);
-    mpz_init(self->upper_bound_minus_one);
-    mpz_init(self->two_upper_bound_minus_one);
    break;
   }
-
+  case DGS_RROUND_KARNEY: {
+    self->call = dgs_rround_mp_call_karney;
+    
+    self->B = dgs_bern_uniform_init(0);
+    
+    char half_exp_str[] = "0.60653065971263342360379953499118045344191813548718695568289";
+    mpfr_t half_exp; mpfr_init2(half_exp, prec);
+    mpfr_set_str(half_exp, half_exp_str, 10, MPFR_RNDN);
+    
+    self->B_half_exp = dgs_bern_mp_init(half_exp);
+    
+    break;
+  }
   default:
     free(self);
     dgs_die("unknown algorithm %d", algorithm);
@@ -125,21 +162,89 @@ void dgs_rround_mp_call_uniform_online(mpz_t rop, dgs_rround_mp_t *self, const m
   mpz_add(rop, rop, self->c_z);
 }
 
+void dgs_rround_mp_call_karney(mpz_t rop, dgs_rround_mp_t *self, const mpfr_t sigma, const mpfr_t c, gmp_randstate_t state) {
+  mpfr_get_z(self->sigma_z, sigma, MPFR_RNDU);
+  do {
+    long k = _dgs_rround_mp_unit_gauss(self, state);
+    long s = 1;
+    if (dgs_bern_uniform_call_libc(self->B))
+      s *= -1;
+    
+    // double tmp = k*self->sigma + s*self->c; tmp = self->y
+    mpfr_mul_si(self->y, sigma, k, MPFR_RNDN);
+    mpfr_mul_si(self->z, c, s, MPFR_RNDN);
+    mpfr_add(self->y, self->y, self->z, MPFR_RNDN);
+    
+    // long i0 = (long)ceil(tmp); i0 = rop
+    mpfr_get_z(rop, self->y, MPFR_RNDU);
+    
+    // double x0 = (i0 - tmp)/self->sigma; x0 = self->y
+    mpfr_z_sub(self->y, rop, self->y, MPFR_RNDN);
+    mpfr_div(self->y, self->y, sigma, MPFR_RNDN);
+    
+    // long j = _dgs_randomm_libc((unsigned long)ceil(self->sigma)); j = self->x
+    mpz_urandomm(self->x, state, self->sigma_z);
+    
+    // double x = x0 + ((double)j)/self->sigma; x = self->z
+    mpfr_si_div(self->z, 1, sigma, MPFR_RNDN);
+    mpfr_mul_z(self->z, self->z, self->x, MPFR_RNDN);
+    mpfr_add(self->z, self->z, self->y, MPFR_RNDN); 
+    
+    //~ if (x >= 1) {
+    if (mpfr_cmp_si(self->z, 1) >= 0) {
+      continue;
+    }
+    
+    //~ if (x == 0) {
+    if (mpfr_zero_p(self->z)) {
+      if (k == 0 && s < 0) {
+        continue;
+      } else {
+        mpz_add(rop, rop, self->x);
+        mpz_mul_si(rop, rop, s);
+        break;
+      }
+    }
+    
+    //~ double bias = exp(-.5*x*(2*k+x)); bias = self->y
+    mpfr_add_si(self->y, self->z, 2*k, MPFR_RNDN);
+    mpfr_mul(self->y, self->z, self->y, MPFR_RNDN);
+    mpfr_mul_d(self->y, self->y, -.5, MPFR_RNDN);
+    mpfr_exp(self->y, self->y, MPFR_RNDN);
+    
+    mpfr_urandomb(self->z, state);
+    
+    //~ if (drand48() <= bias) {
+    if (mpfr_cmp(self->z, self->y) <= 0) {
+      mpz_add(rop, rop, self->x);
+      mpz_mul_si(rop, rop, s);
+      break;
+    }
+    
+  } while (1);
+}
+
 void dgs_rround_mp_clear(dgs_rround_mp_t *self) {
   mpz_clear(self->x);
   mpfr_clear(self->y);
-  mpfr_clear(self->f);
   mpfr_clear(self->z);
   mpfr_clear(self->c_r);
   mpz_clear(self->c_z);
   mpfr_clear(self->tmp);
   
+  if (self->sigma_z)
+    mpz_clear(self->sigma_z);
+  if (self->f)
+    mpfr_clear(self->f);
   if (self->upper_bound)
     mpz_clear(self->upper_bound);
   if (self->upper_bound_minus_one)
     mpz_clear(self->upper_bound_minus_one);
   if (self->two_upper_bound_minus_one)
     mpz_clear(self->two_upper_bound_minus_one);
+
+  if (self->B) dgs_bern_uniform_clear(self->B);
+  if (self->B_half_exp) dgs_bern_mp_clear(self->B_half_exp);
 
   free(self);
 }
