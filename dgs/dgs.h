@@ -42,5 +42,6 @@
 #include "dgs_misc.h"
 #include "dgs_bern.h"
 #include "dgs_gauss.h"
+#include "dgs_rround.h"
 
 #endif //DGS__H
