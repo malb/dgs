@@ -63,6 +63,11 @@ provided during initialization. Available algorithms are:
     Bernoulli distributions (but no calls to $\exp$). Note that this sampler
     adjusts sigma to match $σ₂·k$ for some integer $k$.  Only integer-valued $c$
     are supported.
+
+  - `DGS_DISC_GAUSS_ALIAS` - uses the [alias method](https://en.wikipedia.org/wiki/Alias_method).
+    Setup costs are roughly $σ²$ (as currently implemented) and table sizes linear
+    in $σ$, but sampling is then just a randomized lookup. Any real-valued $c$ is 
+    accepted.
     
   Algorithm 2-4 are described in:
 
