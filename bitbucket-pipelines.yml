@@ -1,9 +1,12 @@
-image: gcc:latest
+image: debian
 
 pipelines:
   default:
     - step:
         script:
+          - apt update
+          - apt dist-upgrade -y
+          - apt install -y build-essential libtool git autoconf libgmp-dev libmpfr-dev
           - autoreconf -i
           - ./configure
           - make
