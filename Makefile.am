@@ -8,8 +8,8 @@ libdgs_la_SOURCES = dgs/dgs_bern.c \
 	dgs/dgs_gauss_dp.c	\
 	dgs/dgs_gauss_mp.c	\
 	dgs/dgs_rround_dp.c	\
-	dgs/dgs_rround_mp.c	
-	
+	dgs/dgs_rround_mp.c
+
 
 pkgincludesubdir = $(includedir)/dgs
 
