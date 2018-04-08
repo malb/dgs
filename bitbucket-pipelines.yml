@@ -1,0 +1,10 @@
+image: gcc:latest
+
+pipelines:
+  default:
+    - step:
+        script:
+          - autoreconf -i
+          - ./configure
+          - make
+          - make check
