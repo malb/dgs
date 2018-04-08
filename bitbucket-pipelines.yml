@@ -11,3 +11,4 @@ pipelines:
           - ./configure
           - make
           - make check
+          - make distcheck
