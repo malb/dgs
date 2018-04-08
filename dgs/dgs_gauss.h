@@ -118,19 +118,19 @@
 */
 
 typedef enum {
-  DGS_DISC_GAUSS_DEFAULT           = 0x0, //<pick algorithm
-  DGS_DISC_GAUSS_UNIFORM_ONLINE    = 0x1, //<call dgs_disc_gauss_mp_call_uniform_online
-  DGS_DISC_GAUSS_UNIFORM_TABLE     = 0x2, //<call dgs_disc_gauss_mp_call_uniform_table
-  DGS_DISC_GAUSS_UNIFORM_LOGTABLE  = 0x3, //<call dgs_disc_gauss_mp_call_uniform_logtable
-  DGS_DISC_GAUSS_SIGMA2_LOGTABLE   = 0x7, //<call dgs_disc_gauss_mp_call_sigma2_logtable
-  DGS_DISC_GAUSS_ALIAS             = 0x8, //<call dgs_disc_gauss_mp_call_alias
+  DGS_DISC_GAUSS_DEFAULT          = 0x0,  //<pick algorithm
+  DGS_DISC_GAUSS_UNIFORM_ONLINE   = 0x1,  //<call dgs_disc_gauss_mp_call_uniform_online
+  DGS_DISC_GAUSS_UNIFORM_TABLE    = 0x2,  //<call dgs_disc_gauss_mp_call_uniform_table
+  DGS_DISC_GAUSS_UNIFORM_LOGTABLE = 0x3,  //<call dgs_disc_gauss_mp_call_uniform_logtable
+  DGS_DISC_GAUSS_SIGMA2_LOGTABLE  = 0x7,  //<call dgs_disc_gauss_mp_call_sigma2_logtable
+  DGS_DISC_GAUSS_ALIAS            = 0x8,  //<call dgs_disc_gauss_mp_call_alias
 } dgs_disc_gauss_alg_t;
 
 /**
    Maximal permitted tablesize if DGS_DISC_GAUSS_DEFAULT is chosen.
 */
 
-#define DGS_DISC_GAUSS_MAX_TABLE_SIZE_BYTES (1<<16)
+#define DGS_DISC_GAUSS_MAX_TABLE_SIZE_BYTES (1 << 16)
 
 /**
    Discrete Gaussian `D_{σ₂,0}` with `σ₂ := sqrt(1/(2·log(2)))`.
@@ -145,7 +145,7 @@ typedef enum {
 */
 
 typedef struct {
-  dgs_bern_uniform_t *B; //< Bernoulli sub-samplers
+  dgs_bern_uniform_t *B;  //< Bernoulli sub-samplers
 } dgs_disc_gauss_sigma2p_t;
 
 /**
@@ -214,7 +214,7 @@ typedef struct _dgs_disc_gauss_dp_t {
 
   double c;
   double c_r;  //< `c_r := c % 1`
-  long   c_z; //< c_z := c - (c_r)
+  long c_z;    //< c_z := c - (c_r)
 
   /**
      Cutoff `τ`, samples outside the range `(⌊c⌉-⌈στ⌉,...,⌊c⌉+⌈στ⌉)` are
@@ -291,7 +291,6 @@ typedef struct _dgs_disc_gauss_dp_t {
 
   long k;
 
-
   /**
    Precomputed `-1/(2σ²)`.
   */
@@ -304,13 +303,13 @@ typedef struct _dgs_disc_gauss_dp_t {
   */
 
   double *rho;
-  
+
   /**
    * Tables required for alias sampling.
    */
-   
-  long* alias;
-  dgs_bern_dp_t** bias;
+
+  long *alias;
+  dgs_bern_dp_t **bias;
 } dgs_disc_gauss_dp_t;
 
 /**
@@ -362,7 +361,7 @@ long dgs_disc_gauss_dp_call_uniform_table(dgs_disc_gauss_dp_t *self);
 long dgs_disc_gauss_dp_call_uniform_table_offset(dgs_disc_gauss_dp_t *self);
 
 /**
-   Sample from ``dgs_disc_gauss_dp_t`` by alias sampling. This is extremely fast, 
+   Sample from ``dgs_disc_gauss_dp_t`` by alias sampling. This is extremely fast,
    but requires more resources and setup cost is around (2τσ)².
 
    :param self: discrete Gaussian sampler
@@ -407,9 +406,7 @@ long dgs_disc_gauss_dp_call_sigma2_logtable(dgs_disc_gauss_dp_t *self);
 
  */
 
-static inline void dgs_disc_gauss_dp_flush_cache(dgs_disc_gauss_dp_t *self) {
-  self->B->count = self->B->length;
-}
+static inline void dgs_disc_gauss_dp_flush_cache(dgs_disc_gauss_dp_t *self) { self->B->count = self->B->length; }
 
 /**
    Free memory.
@@ -419,7 +416,6 @@ static inline void dgs_disc_gauss_dp_flush_cache(dgs_disc_gauss_dp_t *self) {
  */
 
 void dgs_disc_gauss_dp_clear(dgs_disc_gauss_dp_t *self);
-
 
 /**
    Multi-precision Discrete Gaussians `D_{σ,c}`
@@ -449,8 +445,8 @@ typedef struct _dgs_disc_gauss_mp_t {
 
   mpfr_t c;
 
-  mpfr_t c_r; //< `c_r := c % 1`
-  mpz_t c_z;  //< c_z := c - (c_r)
+  mpfr_t c_r;  //< `c_r := c % 1`
+  mpz_t c_z;   //< c_z := c - (c_r)
 
   /**
      Cutoff `τ`, samples outside the range `(⌊c⌉-⌈στ⌉,...,⌊c⌉+⌈στ⌉)` are
@@ -460,7 +456,7 @@ typedef struct _dgs_disc_gauss_mp_t {
 
   size_t tau;
 
-  dgs_disc_gauss_alg_t algorithm; //<  which algorithm to use
+  dgs_disc_gauss_alg_t algorithm;  //<  which algorithm to use
 
   /**
      We use a uniform Bernoulli to decide signs.
@@ -477,7 +473,6 @@ typedef struct _dgs_disc_gauss_mp_t {
    */
 
   dgs_bern_exp_mp_t *Bexp;
-
 
   /**
      `D_{σ₂,0}` which is easily sampable`
@@ -534,11 +529,11 @@ typedef struct _dgs_disc_gauss_mp_t {
 
   mpfr_t f;
 
-  mpz_t x; //< space for temporary integer
-  mpz_t y_z; //< space for temporary integer
-  mpz_t x2; // space for temporary integer
-  mpfr_t y; // space for temporary rational number
-  mpfr_t z; // space for temporary rational number
+  mpz_t x;    //< space for temporary integer
+  mpz_t y_z;  //< space for temporary integer
+  mpz_t x2;   // space for temporary integer
+  mpfr_t y;   // space for temporary rational number
+  mpfr_t z;   // space for temporary rational number
 
   /**
      Precomputed values for `exp(-(x-c)²/(2σ²))` in
@@ -546,17 +541,18 @@ typedef struct _dgs_disc_gauss_mp_t {
   */
 
   mpfr_t *rho;
-  
-    /**
-   * Tables required for alias sampling.
-   */
-   
-  mpz_t* alias;
-  dgs_bern_mp_t** bias;
+
+  /**
+ * Tables required for alias sampling.
+ */
+
+  mpz_t *alias;
+  dgs_bern_mp_t **bias;
 
 } dgs_disc_gauss_mp_t;
 
-dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(const mpfr_t sigma, const mpfr_t c, size_t tau, dgs_disc_gauss_alg_t algorithm);
+dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(const mpfr_t sigma, const mpfr_t c, size_t tau,
+                                            dgs_disc_gauss_alg_t algorithm);
 
 /**
    Sample from ``dgs_disc_gauss_mp_t`` by rejection sampling using the uniform
@@ -588,7 +584,7 @@ void dgs_disc_gauss_mp_call_uniform_table(mpz_t rop, dgs_disc_gauss_mp_t *self, 
 void dgs_disc_gauss_mp_call_uniform_table_offset(mpz_t rop, dgs_disc_gauss_mp_t *self, gmp_randstate_t state);
 
 /**
-   Sample from ``dgs_disc_gauss_mp_t`` by alias sampling. This is extremely fast, 
+   Sample from ``dgs_disc_gauss_mp_t`` by alias sampling. This is extremely fast,
    but requires more resources and setup cost is around (2τσ)².
 
    :param self: discrete Gaussian sampler
@@ -637,9 +633,7 @@ void dgs_disc_gauss_mp_call_sigma2_logtable(mpz_t rop, dgs_disc_gauss_mp_t *self
 
  */
 
-static inline void dgs_disc_gauss_mp_flush_cache(dgs_disc_gauss_mp_t *self) {
-  self->B->count = self->B->length;
-}
+static inline void dgs_disc_gauss_mp_flush_cache(dgs_disc_gauss_mp_t *self) { self->B->count = self->B->length; }
 
 /**
    Free memory.
@@ -650,4 +644,4 @@ static inline void dgs_disc_gauss_mp_flush_cache(dgs_disc_gauss_mp_t *self) {
 
 void dgs_disc_gauss_mp_clear(dgs_disc_gauss_mp_t *self);
 
-#endif //DGS_GAUSS__H
+#endif  // DGS_GAUSS__H

@@ -36,5 +36,11 @@ TESTS = test_gauss_z test_rround_z
 
 SUBDIRS = . benchmarks
 
+CLANGFORMAT       ?= clang-format
+.PHONY: check-style
+
+fix-style:
+	$(CLANGFORMAT) -i --style=file dgs/*.{c,h}
+
 clean-local:
 	(cd tests; make clean; cd ..)

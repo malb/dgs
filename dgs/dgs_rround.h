@@ -4,12 +4,12 @@
    A discrete Gaussian distribution on the Integers is a distribution where the
    integer `x` is sampled with probability proportional to `exp(-(x-c)²/(2σ²))`.
    It is denoted by `D_{σ,c}` where `σ` is the width parameter (close to the
-   standard deviation) and `c` is the center. This file contains algorithms 
-   suitable for situations, where for each set of parameters (σ,c) only a small 
-   number of samples are desired. I.e. no precomputation is done during 
-   initialization that depends on the parameters of the distribution. Drawing 
-   samples from such a distribution can be viewed as rounding `c` to a nearby 
-   integer, where 'nearby' is defined by the width parameter `σ`. 
+   standard deviation) and `c` is the center. This file contains algorithms
+   suitable for situations, where for each set of parameters (σ,c) only a small
+   number of samples are desired. I.e. no precomputation is done during
+   initialization that depends on the parameters of the distribution. Drawing
+   samples from such a distribution can be viewed as rounding `c` to a nearby
+   integer, where 'nearby' is defined by the width parameter `σ`.
 
    AVAILABLE ALGORITHMS:
 
@@ -18,7 +18,7 @@
    `\exp(-(x-c)²/(2σ²))` where `\exp(-(x-c)²/(2σ²))` is computed in each
    invocation. Typically this is very slow.
 
- - ``DGS_RROUND_KARNEY`` - Use Karney's algorithm. This is better than 
+ - ``DGS_RROUND_KARNEY`` - Use Karney's algorithm. This is better than
    uniform rejection sampling.
 
   AVAILABLE PRECISIONS:
@@ -51,9 +51,9 @@
 */
 
 typedef enum {
-  DGS_RROUND_DEFAULT           = 0x0, //<pick algorithm
-  DGS_RROUND_UNIFORM_ONLINE    = 0x1, //<call dgs_disc_gauss_mp_call_uniform_online
-  DGS_RROUND_KARNEY            = 0x2, //<call dgs_disc_gauss_mp_call_karney
+  DGS_RROUND_DEFAULT        = 0x0,  //<pick algorithm
+  DGS_RROUND_UNIFORM_ONLINE = 0x1,  //<call dgs_disc_gauss_mp_call_uniform_online
+  DGS_RROUND_KARNEY         = 0x2,  //<call dgs_disc_gauss_mp_call_karney
 } dgs_rround_alg_t;
 
 struct _dgs_rround_mp_t;
@@ -106,13 +106,13 @@ dgs_rround_dp_t *dgs_rround_dp_init(size_t tau, dgs_rround_alg_t algorithm);
  */
 
 long dgs_rround_dp_call_uniform_online(dgs_rround_dp_t *self, double sigma, double c);
- 
-  /**
-   Sample from ``dgs_rround_dp_t`` using Karney's algorithm. This is similar
-   to the sigma2 method, but can sample from any c and σ.
 
-   :param self: discrete Gaussian sampler
- */
+/**
+ Sample from ``dgs_rround_dp_t`` using Karney's algorithm. This is similar
+ to the sigma2 method, but can sample from any c and σ.
+
+ :param self: discrete Gaussian sampler
+*/
 long dgs_rround_dp_call_karney(dgs_rround_dp_t *self, double sigma, double c);
 
 /**
@@ -122,7 +122,6 @@ long dgs_rround_dp_call_karney(dgs_rround_dp_t *self, double sigma, double c);
 
  */
 void dgs_rround_dp_clear(dgs_rround_dp_t *self);
-
 
 /**
    Multi-precision Discrete Gaussians `D_{σ,c}`
@@ -138,8 +137,8 @@ void dgs_rround_dp_clear(dgs_rround_dp_t *self);
 
 typedef struct _dgs_rround_mp_t {
 
-   dgs_bern_uniform_t *B;
-   dgs_bern_mp_t *B_half_exp;
+  dgs_bern_uniform_t *B;
+  dgs_bern_mp_t *B_half_exp;
 
   /**
      Cutoff `τ`, samples outside the range `(⌊c⌉-⌈στ⌉,...,⌊c⌉+⌈στ⌉)` are
@@ -148,7 +147,7 @@ typedef struct _dgs_rround_mp_t {
   */
   size_t tau;
 
-  dgs_rround_alg_t algorithm; //<  which algorithm to use
+  dgs_rround_alg_t algorithm;  //<  which algorithm to use
 
   /**
    Return an ``mpz_t`` sampled from this sampler
@@ -164,9 +163,9 @@ typedef struct _dgs_rround_mp_t {
   /**
    * Temporary variables:
    */
-  mpfr_t c_r; //< `c_r := c % 1`
-  mpz_t c_z;  //< c_z := c - (c_r)
-  
+  mpfr_t c_r;  //< `c_r := c % 1`
+  mpz_t c_z;   //< c_z := c - (c_r)
+
   mpz_t sigma_z;
 
   /**
@@ -196,9 +195,9 @@ typedef struct _dgs_rround_mp_t {
 
   mpfr_t f;
 
-  mpz_t x; //< space for temporary integer
-  mpfr_t y; // space for temporary rational number
-  mpfr_t z; // space for temporary rational number
+  mpz_t x;   //< space for temporary integer
+  mpfr_t y;  // space for temporary rational number
+  mpfr_t z;  // space for temporary rational number
   mpfr_t tmp;
 } dgs_rround_mp_t;
 
@@ -215,7 +214,8 @@ dgs_rround_mp_t *dgs_rround_mp_init(size_t tau, dgs_rround_alg_t algorithm, mpfr
 
  */
 
-void dgs_rround_mp_call_uniform_online(mpz_t rop, dgs_rround_mp_t *self, const mpfr_t sigma, const mpfr_t c, gmp_randstate_t state);
+void dgs_rround_mp_call_uniform_online(mpz_t rop, dgs_rround_mp_t *self, const mpfr_t sigma, const mpfr_t c,
+                                       gmp_randstate_t state);
 
 /**
   Sample from ``dgs_rround_mp_t`` using Karney's algorithm.
@@ -228,8 +228,8 @@ void dgs_rround_mp_call_uniform_online(mpz_t rop, dgs_rround_mp_t *self, const m
 
  */
 
-void dgs_rround_mp_call_karney(mpz_t rop, dgs_rround_mp_t *self, const mpfr_t sigma, const mpfr_t c, gmp_randstate_t state);
-
+void dgs_rround_mp_call_karney(mpz_t rop, dgs_rround_mp_t *self, const mpfr_t sigma, const mpfr_t c,
+                               gmp_randstate_t state);
 
 /**
    Free memory.
@@ -240,4 +240,4 @@ void dgs_rround_mp_call_karney(mpz_t rop, dgs_rround_mp_t *self, const mpfr_t si
 
 void dgs_rround_mp_clear(dgs_rround_mp_t *self);
 
-#endif //DGS_RROUND__H
+#endif  // DGS_RROUND__H
