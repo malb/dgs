@@ -319,6 +319,11 @@ typedef struct _dgs_disc_gauss_dp_t {
   struct _dgs_disc_gauss_dp_t* base_sampler;
   size_t n_coefficients;
   long* coefficients;
+  
+  /**
+   * Sampler to adjust center in convolution
+   */
+  struct _dgs_disc_gauss_dp_t* coset_sampler;
 
 } dgs_disc_gauss_dp_t;
 
@@ -383,8 +388,7 @@ long dgs_disc_gauss_dp_call_alias(dgs_disc_gauss_dp_t *self);
    Sample from ``dgs_disc_gauss_dp_t`` by convolution sampling 
    (base sampler = alias sampling). This can be used to reduce 
    the memory overhead and setup costs of alias sampling for 
-   wide distributions, at the cost of increasing running time, but
-   is only implemented for centered Gaussians.
+   wide distributions, at the cost of increasing running time.
 
    :param self: discrete Gaussian sampler
  */

@@ -242,15 +242,17 @@ dgs_disc_gauss_dp_t *dgs_disc_gauss_dp_init(double sigma, double c, size_t tau, 
   case DGS_DISC_GAUSS_CONVOLUTION: {
     self->call = dgs_disc_gauss_dp_call_convolution;
     
-    if (fabs(self->c_r) > DGS_DISC_GAUSS_INTEGER_CUTOFF) {
-      dgs_disc_gauss_dp_clear(self);
-      dgs_die("algorithm DGS_DISC_GAUSS_CONVOLUTION requires c%1 == 0");
+    double eta = 2;
+    double sigma1 = sigma;
+    double coset_sigma = sqrt(2)*eta;
+    if (fabs(self->c_r) > 0) {
+      // we might need to adjust the center
+      sigma1 = sqrt(sigma*sigma - coset_sigma*coset_sigma);
     }
     
-    double eta = 2;
-    long table_size = 2*ceil(sigma*tau) * (sizeof(dgs_bern_dp_t) + sizeof(long));
+    long table_size = 2*ceil(sigma1*tau) * (sizeof(dgs_bern_dp_t) + sizeof(long));
     int recursion_level = 0;
-    double current_sigma = sigma;
+    double current_sigma = sigma1;
     long z1 = 1;
     long z2 = 1;
     
@@ -273,7 +275,9 @@ dgs_disc_gauss_dp_t *dgs_disc_gauss_dp_init(double sigma, double c, size_t tau, 
       self->coefficients[i] = 1;
     }
     
-    current_sigma = sigma;
+    // if there is no convolution, we simply forward to alias and
+    // so we won't need adjustment of sigma, even if sampling off center
+    current_sigma = (recursion_level == 0)? sigma : sigma1;
     
     // redo above computation to store coefficients
     for (int i = 0; i < recursion_level; ++i) {
@@ -298,7 +302,14 @@ dgs_disc_gauss_dp_t *dgs_disc_gauss_dp_init(double sigma, double c, size_t tau, 
       current_sigma /= (sqrt(z1*z1 + z2*z2));
     }
     
-    self->base_sampler = dgs_disc_gauss_dp_init(current_sigma, 0, tau, DGS_DISC_GAUSS_ALIAS);
+    double base_c = self->c_r;
+    self->coset_sampler = NULL;
+    if (recursion_level > 0 && fabs(self->c_r) > 0) {
+      // we'll need to adjust the center
+      base_c = 0.0;
+      self->coset_sampler = dgs_disc_gauss_dp_init(coset_sigma, self->c_r, tau, DGS_DISC_GAUSS_ALIAS);
+    }
+    self->base_sampler = dgs_disc_gauss_dp_init(current_sigma, base_c, tau, DGS_DISC_GAUSS_ALIAS);
     
     break;
   }
@@ -362,6 +373,11 @@ long dgs_disc_gauss_dp_call_convolution(dgs_disc_gauss_dp_t *self) {
   long x = 0;
   for (int i = 0; i < self->n_coefficients; ++i) {
     x += self->coefficients[i]*self->base_sampler->call(self->base_sampler);
+  }
+  
+  // adjust center if necessary
+  if (self->coset_sampler) {
+    x += self->coset_sampler->call(self->coset_sampler);
   }
   return x + self->c_z;
 }

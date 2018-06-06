@@ -198,9 +198,17 @@ int main(int argc, char *argv[]) {
   test_mean_dp( 2.0, 1.347, 6, DGS_DISC_GAUSS_ALIAS);
   printf("\n");
 
-  // testing mean for convolution also not suitable, since 
-  // it is likely to fail with large sigma (which is the only
-  // type that makes sense for convolution)
+  // one would hope to test the convolution sampler with larger
+  // sigma, but in that case the mean test is likely to fail
+  // even if the sampler is correct. We still do some tests but this
+  // is mostly to ensure that the alias sampler is instatiated 
+  // correctly
+  test_mean_dp( 3.0, 0.0, 6, DGS_DISC_GAUSS_CONVOLUTION);
+  test_mean_dp(10.0, 0.0, 6, DGS_DISC_GAUSS_CONVOLUTION);
+  test_mean_dp( 3.3, 1.0, 6, DGS_DISC_GAUSS_CONVOLUTION);
+  test_mean_dp( 2.0, 2.0, 6, DGS_DISC_GAUSS_CONVOLUTION);
+  test_mean_dp( 2.0, 1.347, 6, DGS_DISC_GAUSS_CONVOLUTION);
+  printf("\n");
 
   return 0;
 }
