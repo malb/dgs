@@ -118,12 +118,13 @@
 */
 
 typedef enum {
-  DGS_DISC_GAUSS_DEFAULT          = 0x0,  //<pick algorithm
-  DGS_DISC_GAUSS_UNIFORM_ONLINE   = 0x1,  //<call dgs_disc_gauss_mp_call_uniform_online
-  DGS_DISC_GAUSS_UNIFORM_TABLE    = 0x2,  //<call dgs_disc_gauss_mp_call_uniform_table
-  DGS_DISC_GAUSS_UNIFORM_LOGTABLE = 0x3,  //<call dgs_disc_gauss_mp_call_uniform_logtable
-  DGS_DISC_GAUSS_SIGMA2_LOGTABLE  = 0x7,  //<call dgs_disc_gauss_mp_call_sigma2_logtable
-  DGS_DISC_GAUSS_ALIAS            = 0x8,  //<call dgs_disc_gauss_mp_call_alias
+  DGS_DISC_GAUSS_DEFAULT           = 0x0, //<pick algorithm
+  DGS_DISC_GAUSS_UNIFORM_ONLINE    = 0x1, //<call dgs_disc_gauss_mp_call_uniform_online
+  DGS_DISC_GAUSS_UNIFORM_TABLE     = 0x2, //<call dgs_disc_gauss_mp_call_uniform_table
+  DGS_DISC_GAUSS_UNIFORM_LOGTABLE  = 0x3, //<call dgs_disc_gauss_mp_call_uniform_logtable
+  DGS_DISC_GAUSS_SIGMA2_LOGTABLE   = 0x7, //<call dgs_disc_gauss_mp_call_sigma2_logtable
+  DGS_DISC_GAUSS_ALIAS             = 0x8, //<call dgs_disc_gauss_mp_call_alias
+  DGS_DISC_GAUSS_CONVOLUTION       = 0x9, //<call dgs_disc_gauss_mp_call_convolution
 } dgs_disc_gauss_alg_t;
 
 /**
@@ -308,8 +309,16 @@ typedef struct _dgs_disc_gauss_dp_t {
    * Tables required for alias sampling.
    */
 
-  long *alias;
-  dgs_bern_dp_t **bias;
+  long* alias;
+  dgs_bern_dp_t** bias;
+  
+  /**
+   * Base sampler for convolution
+   */
+  struct _dgs_disc_gauss_dp_t* base_sampler;
+  size_t n_coefficients;
+  long* coefficients;
+
 } dgs_disc_gauss_dp_t;
 
 /**
@@ -368,6 +377,18 @@ long dgs_disc_gauss_dp_call_uniform_table_offset(dgs_disc_gauss_dp_t *self);
  */
 
 long dgs_disc_gauss_dp_call_alias(dgs_disc_gauss_dp_t *self);
+
+/**
+   Sample from ``dgs_disc_gauss_dp_t`` by convolution sampling 
+   (base sampler = alias sampling). This can be used to reduce 
+   the memory overhead and setup costs of alias sampling for 
+   wide distributions, at the cost of increasing running time, but
+   is only implemented for centered Gaussians.
+
+   :param self: discrete Gaussian sampler
+ */
+
+long dgs_disc_gauss_dp_call_convolution(dgs_disc_gauss_dp_t *self);
 
 /**
   Sample from ``dgs_disc_gauss_dp_t`` by rejection sampling using the uniform
