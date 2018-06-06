@@ -213,6 +213,11 @@ dgs_disc_gauss_dp_t *dgs_disc_gauss_dp_init(double sigma, double c, size_t tau, 
     self->alias = (long*)malloc(sizeof(long)*self->two_upper_bound_minus_one);
     self->bias = (dgs_bern_dp_t**)malloc(sizeof(dgs_bern_dp_t*)*self->two_upper_bound_minus_one);
     
+    if (!self->alias || !self->bias){
+      dgs_disc_gauss_dp_clear(self);
+      dgs_die("out of memory");
+    }
+    
     // simple robin hood strategy approximates good alias
     // this precomputation takes ~n^2, but could be reduced by 
     // using better data structures to compute min and max 
@@ -230,6 +235,70 @@ dgs_disc_gauss_dp_t *dgs_disc_gauss_dp_init(double sigma, double c, size_t tau, 
       
       low = _dgs_disc_gauss_dp_min_in_rho(self);
     }
+    
+    break;
+  }
+  
+  case DGS_DISC_GAUSS_CONVOLUTION: {
+    self->call = dgs_disc_gauss_dp_call_convolution;
+    
+    if (fabs(self->c_r) > DGS_DISC_GAUSS_INTEGER_CUTOFF) {
+      dgs_disc_gauss_dp_clear(self);
+      dgs_die("algorithm DGS_DISC_GAUSS_CONVOLUTION requires c%1 == 0");
+    }
+    
+    double eta = 2;
+    long table_size = 2*ceil(sigma*tau) * (sizeof(dgs_bern_dp_t) + sizeof(long));
+    int recursion_level = 0;
+    double current_sigma = sigma;
+    long z1 = 1;
+    long z2 = 1;
+    
+    // compute recursion level for convolution
+    while (table_size > (DGS_DISC_GAUSS_MAX_TABLE_SIZE_BYTES >> 1)) {
+      recursion_level++;
+      z1 = floor(sqrt(current_sigma/(eta*2)));
+      if (z1 == 0) {
+        dgs_disc_gauss_dp_clear(self);
+        dgs_die("MAX_TABLE_SIZE too small to store alias sampler!");
+      }
+      z2 = (z1 > 1) ? z1 - 1 : 1;
+      current_sigma /= (sqrt(z1*z1 + z2*z2));
+      table_size = 2*ceil(current_sigma*tau) * (sizeof(dgs_bern_dp_t) + sizeof(long));
+    }
+    
+    self->n_coefficients = 1 << recursion_level;
+    self->coefficients = (long*)malloc(sizeof(long)*self->n_coefficients);
+    for (int i = 0; i < self->n_coefficients; ++i) {
+      self->coefficients[i] = 1;
+    }
+    
+    current_sigma = sigma;
+    
+    // redo above computation to store coefficients
+    for (int i = 0; i < recursion_level; ++i) {
+      z1 = floor(sqrt(current_sigma/(eta*2)));
+      z2 = (z1 > 1) ? z1 - 1 : 1;
+      
+      // we unroll the recursion on the coefficients on the fly
+      // so we don't have to use recursion during the call
+      int off = (1 << recursion_level - i - 1);
+      for (int j = 0; j < (1 << i); ++j) {
+        for (int k = 0; k < off;++k) {
+          self->coefficients[2*j*off + k] *= z1;
+        }
+      }
+      
+      for (int j = 0; j < (1 << i); ++j) {
+        for (int k = 0; k < off;++k) {
+          self->coefficients[(2*j + 1)*off + k] *= z2;
+        }
+      }
+      
+      current_sigma /= (sqrt(z1*z1 + z2*z2));
+    }
+    
+    self->base_sampler = dgs_disc_gauss_dp_init(current_sigma, 0, tau, DGS_DISC_GAUSS_ALIAS);
     
     break;
   }
@@ -289,6 +358,14 @@ long dgs_disc_gauss_dp_call_alias(dgs_disc_gauss_dp_t *self) {
   return x + self->c_z - self->upper_bound_minus_one;
 }
 
+long dgs_disc_gauss_dp_call_convolution(dgs_disc_gauss_dp_t *self) {
+  long x = 0;
+  for (int i = 0; i < self->n_coefficients; ++i) {
+    x += self->coefficients[i]*self->base_sampler->call(self->base_sampler);
+  }
+  return x + self->c_z;
+}
+
 long dgs_disc_gauss_dp_call_uniform_logtable(dgs_disc_gauss_dp_t *self) {
   long x;
   do {
@@ -333,6 +410,12 @@ void dgs_disc_gauss_dp_clear(dgs_disc_gauss_dp_t *self) {
       }
     }
     free(self->bias);
+  }
+  if (self->base_sampler) {
+    dgs_disc_gauss_dp_clear(self->base_sampler);
+  }
+  if (self->coefficients) {
+    free(self->coefficients);
   }
   
   free(self);

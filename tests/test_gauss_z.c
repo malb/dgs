@@ -129,6 +129,12 @@ int main(int argc, char *argv[]) {
   test_ratios_dp(15.4, 3, DGS_DISC_GAUSS_UNIFORM_LOGTABLE);
   test_ratios_dp(15.4, 3, DGS_DISC_GAUSS_SIGMA2_LOGTABLE);
   test_ratios_dp(15.4, 3, DGS_DISC_GAUSS_ALIAS);
+  
+  // we need some large sigma test cases here, because
+  // everything else would just be retesting alias
+  test_ratios_dp(150, 6, DGS_DISC_GAUSS_CONVOLUTION);
+  test_ratios_dp(1500, 6, DGS_DISC_GAUSS_CONVOLUTION);
+  test_ratios_dp((1<<27), 6, DGS_DISC_GAUSS_CONVOLUTION);
   printf("\n");
 
   printf("# testing [⌊c⌋-⌈στ⌉,…, ⌊c⌋+⌈στ⌉] boundaries #\n");
@@ -155,6 +161,10 @@ int main(int argc, char *argv[]) {
   test_uniform_boundaries_dp( 3.3, 1.0, 1, DGS_DISC_GAUSS_ALIAS);
   test_uniform_boundaries_dp( 2.0, 2.0, 2, DGS_DISC_GAUSS_ALIAS);
   printf("\n");
+  
+  // Testing boundaries for convolution does not work in the 
+  // same way since the boundary constraints are imposed on
+  // the base sampler, but the convolution can exceed them
 
   printf("# testing c is center #\n");
   test_mean_dp( 3.0, 0.0, 6, DGS_DISC_GAUSS_UNIFORM_ONLINE);
@@ -179,7 +189,6 @@ int main(int argc, char *argv[]) {
   test_mean_dp(10.0, 0.0, 6, DGS_DISC_GAUSS_SIGMA2_LOGTABLE);
   test_mean_dp( 3.3, 1.0, 6, DGS_DISC_GAUSS_SIGMA2_LOGTABLE);
   test_mean_dp( 2.0, 2.0, 6, DGS_DISC_GAUSS_SIGMA2_LOGTABLE);
-
   printf("\n");
   
   test_mean_dp( 3.0, 0.0, 6, DGS_DISC_GAUSS_ALIAS);
@@ -187,8 +196,11 @@ int main(int argc, char *argv[]) {
   test_mean_dp( 3.3, 1.0, 6, DGS_DISC_GAUSS_ALIAS);
   test_mean_dp( 2.0, 2.0, 6, DGS_DISC_GAUSS_ALIAS);
   test_mean_dp( 2.0, 1.347, 6, DGS_DISC_GAUSS_ALIAS);
-
   printf("\n");
+
+  // testing mean for convolution also not suitable, since 
+  // it is likely to fail with large sigma (which is the only
+  // type that makes sense for convolution)
 
   return 0;
 }
