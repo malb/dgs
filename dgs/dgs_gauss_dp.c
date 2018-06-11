@@ -433,6 +433,9 @@ void dgs_disc_gauss_dp_clear(dgs_disc_gauss_dp_t *self) {
   if (self->coefficients) {
     free(self->coefficients);
   }
+  if (self->coset_sampler) {
+    dgs_disc_gauss_dp_clear(self->coset_sampler);
+  }
   
   free(self);
 }

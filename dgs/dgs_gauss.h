@@ -575,9 +575,20 @@ typedef struct _dgs_disc_gauss_mp_t {
     /**
    * Tables required for alias sampling.
    */
-   
   mpz_t* alias;
   dgs_bern_mp_t** bias;
+  
+  /**
+   * Base sampler for convolution
+   */
+  struct _dgs_disc_gauss_mp_t* base_sampler;
+  size_t n_coefficients;
+  mpz_t* coefficients;
+  
+  /**
+   * Sampler to adjust center in convolution
+   */
+  struct _dgs_disc_gauss_mp_t* coset_sampler;
 
 } dgs_disc_gauss_mp_t;
 
@@ -619,6 +630,16 @@ void dgs_disc_gauss_mp_call_uniform_table_offset(mpz_t rop, dgs_disc_gauss_mp_t 
    :param self: discrete Gaussian sampler
  */
 void dgs_disc_gauss_mp_call_alias(mpz_t rop, dgs_disc_gauss_mp_t *self, gmp_randstate_t state);
+
+/**
+   Sample from ``dgs_disc_gauss_mp_t`` by convolution sampling 
+   (base sampler = alias sampling). This can be used to reduce 
+   the memory overhead and setup costs of alias sampling for 
+   wide distributions, at the cost of increasing running time.
+
+   :param self: discrete Gaussian sampler
+ */
+void dgs_disc_gauss_mp_call_convolution(mpz_t rop, dgs_disc_gauss_mp_t *self, gmp_randstate_t state);
 
 /**
   Sample from ``dgs_disc_gauss_mp_t`` by rejection sampling using the uniform
