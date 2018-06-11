@@ -149,7 +149,7 @@ void dgs_disc_gauss_sigma2p_clear(dgs_disc_gauss_sigma2p_t *self) {
 /** GENERAL SIGMA :: INIT **/
 
 static inline void _dgs_disc_gauss_mp_init_f(mpfr_t f, const mpfr_t sigma) {
-  mpfr_init2(f, mpfr_get_prec(sigma));
+  // we are assuming, mpfr_init was called on f already
   mpfr_set(f, sigma, MPFR_RNDN);
   mpfr_sqr(f, f, MPFR_RNDN);        // f = σ²
   mpfr_mul_ui(f, f, 2, MPFR_RNDN);  // f = 2 σ²
@@ -198,6 +198,7 @@ dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(const mpfr_t sigma, const mpfr_t c, 
   mpz_init(self->k);
   mpfr_init2(self->y, prec);
   mpfr_init2(self->z, prec);
+  mpfr_init2(self->f, prec);
 
   mpfr_init2(self->sigma, prec);
   mpfr_set(self->sigma, sigma, MPFR_RNDN);
@@ -399,6 +400,137 @@ dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(const mpfr_t sigma, const mpfr_t c, 
     mpfr_clear(p);
     break;
   }
+  
+  case DGS_DISC_GAUSS_CONVOLUTION: {
+    self->call = dgs_disc_gauss_mp_call_convolution;
+    
+    //~ double sigma1 = sigma;
+    //~ double coset_sigma = sqrt(2)*eta;
+    mpfr_t eta, sigma1, coset_sigma;
+    mpfr_inits2(prec, eta, sigma1, coset_sigma, NULL);
+    
+    //~ double eta = sqrt((p+1)*log(2))/pi;
+    mpfr_const_log2(eta, MPFR_RNDN);
+    mpfr_const_pi(self->y, MPFR_RNDN);
+    mpfr_mul_si(eta, eta, prec + 1, MPFR_RNDN);
+    mpfr_sqrt(eta, eta, MPFR_RNDN);
+    mpfr_div(eta, eta, self->y, MPFR_RNDN);
+    
+    mpfr_log(eta, eta, MPFR_RNDN);
+    
+    mpfr_set(sigma1, sigma, MPFR_RNDN);
+    mpfr_set_si(coset_sigma, 2, MPFR_RNDN);
+    mpfr_sqrt(coset_sigma, coset_sigma, MPFR_RNDN);
+    mpfr_mul(coset_sigma, coset_sigma, eta, MPFR_RNDN);
+    
+    if (!mpfr_zero_p(self->c_r)) {
+      // we might need to adjust the center
+      //~ sigma1 = sqrt(sigma*sigma - coset_sigma*coset_sigma);
+      mpfr_mul(sigma1, sigma1, sigma1, MPFR_RNDN);
+      
+      mpfr_set(self->z, coset_sigma, MPFR_RNDN);
+      mpfr_mul(self->z, self->z, self->z, MPFR_RNDN);
+      
+      mpfr_sub(sigma1, sigma1, self->z, MPFR_RNDN);
+      mpfr_sqrt(sigma1, sigma1, MPFR_RNDN);
+    }
+    
+    long table_size = 2*ceil(mpfr_get_ui(sigma1, MPFR_RNDU)*tau) * (sizeof(dgs_bern_mp_t) + sizeof(mpz_t));
+    int recursion_level = 0;
+    // for computing the recusrion level, we can probably get away with doubles:
+    double current_sigma = mpfr_get_d(sigma1, MPFR_RNDN);
+    long z1 = 1;
+    long z2 = 1;
+    
+    // compute recursion level for convolution
+    while (table_size > (DGS_DISC_GAUSS_MAX_TABLE_SIZE_BYTES >> 1)) {
+      recursion_level++;
+      z1 = floor(sqrt(current_sigma/(mpfr_get_d(eta, MPFR_RNDN)*2)));
+      if (z1 == 0) {
+        dgs_disc_gauss_mp_clear(self);
+        dgs_die("MAX_TABLE_SIZE too small to store alias sampler!");
+      }
+      z2 = (z1 > 1) ? z1 - 1 : 1;
+      current_sigma /= (sqrt(z1*z1 + z2*z2));
+      table_size = 2*ceil(current_sigma*tau) * (sizeof(dgs_bern_mp_t) + sizeof(mpz_t));
+    }
+    
+    self->n_coefficients = 1 << recursion_level;
+    self->coefficients = (mpz_t*)calloc(self->n_coefficients, sizeof(mpz_t));
+    if (!self->coefficients){
+      dgs_disc_gauss_mp_clear(self);
+      dgs_die("out of memory");
+    }
+    for (int i = 0; i < self->n_coefficients; ++i) {
+      //~ self->coefficients[i] = 1;
+      mpz_init(self->coefficients[i]);
+      mpz_set_si(self->coefficients[i], 1);
+    }
+    
+    // if there is no convolution, we simply forward to alias and
+    // so we won't need adjustment of sigma, even if sampling off center
+    //~ current_sigma = (recursion_level == 0)? sigma : sigma1;
+    
+    if (recursion_level == 0) {
+      mpfr_set(self->y, sigma, MPFR_RNDN);
+    } else {
+      mpfr_set(self->y, sigma1, MPFR_RNDN);
+    }
+    
+    // redo above computation to store coefficients
+    for (int i = 0; i < recursion_level; ++i) {
+      //~ z1 = floor(sqrt(current_sigma/(eta*2)));
+      mpfr_set(self->z, self->y, MPFR_RNDN);
+      mpfr_div(self->z, self->z, eta, MPFR_RNDN);
+      mpfr_div_si(self->z, self->z, 2, MPFR_RNDN);
+      mpfr_sqrt(self->z, self->z, MPFR_RNDN);
+      mpfr_get_z(self->x, self->z, MPFR_RNDZ);
+      
+      //~ z2 = (z1 > 1) ? z1 - 1 : 1;
+      int tmp = (mpz_cmp_si(self->x, 1) > 0);
+      mpz_sub_ui(self->x2, self->x, tmp);
+      
+      // we unroll the recursion on the coefficients on the fly
+      // so we don't have to use recursion during the call
+      int off = (1 << recursion_level - i - 1);
+      for (int j = 0; j < (1 << i); ++j) {
+        for (int k = 0; k < off;++k) {
+          //~ self->coefficients[2*j*off + k] *= z1;
+          mpz_mul(self->coefficients[2*j*off + k], self->coefficients[2*j*off + k], self->x);
+        }
+      }
+      
+      for (int j = 0; j < (1 << i); ++j) {
+        for (int k = 0; k < off;++k) {
+          //~ self->coefficients[(2*j + 1)*off + k] *= z2;
+          mpz_mul(self->coefficients[(2*j + 1)*off + k], self->coefficients[(2*j + 1)*off + k], self->x2);
+        }
+      }
+      
+      
+      //~ current_sigma /= (sqrt(z1*z1 + z2*z2));
+      mpz_mul(self->x, self->x, self->x);
+      mpz_mul(self->x2, self->x2, self->x2);
+      mpfr_set_z(self->z, self->x, MPFR_RNDN);
+      mpfr_add_z(self->z, self->z, self->x2, MPFR_RNDN);
+      mpfr_sqrt(self->z, self->z, MPFR_RNDN);
+      mpfr_div(self->y, self->y, self->z, MPFR_RNDN);
+    }
+    
+    //~ double base_c = self->c_r;
+    mpfr_set(self->z, self->c_r, MPFR_RNDN);
+    self->coset_sampler = NULL;
+    //~ if (recursion_level > 0 && fabs(self->c_r) > 0) {
+    if (recursion_level > 0 && !mpfr_zero_p(self->c_r)) {
+      // we'll need to adjust the center
+      //~ base_c = 0.0;
+      mpfr_set_zero(self->z, 0);
+      self->coset_sampler = dgs_disc_gauss_mp_init(coset_sigma, self->c_r, tau, DGS_DISC_GAUSS_ALIAS);
+    }
+    self->base_sampler = dgs_disc_gauss_mp_init(self->y, self->z, tau, DGS_DISC_GAUSS_ALIAS);
+    
+    break;
+  }
 
   default: free(self); dgs_die("unknown algorithm %d", algorithm);
   }
@@ -446,6 +578,23 @@ void dgs_disc_gauss_mp_call_alias(mpz_t rop, dgs_disc_gauss_mp_t *self, gmp_rand
     }
   }
   mpz_sub(rop, rop, self->upper_bound_minus_one);
+  mpz_add(rop, rop, self->c_z);
+}
+
+void dgs_disc_gauss_mp_call_convolution(mpz_t rop, dgs_disc_gauss_mp_t *self, gmp_randstate_t state) {
+  mpz_set_si(rop, 0);
+  for (int i = 0; i < self->n_coefficients; ++i) {
+    self->base_sampler->call(self->x, self->base_sampler, state);
+    mpz_mul(self->x, self->x, self->coefficients[i]);
+    mpz_add(rop, rop, self->x);
+  }
+  
+  // adjust center if necessary
+  if (self->coset_sampler) {
+    self->coset_sampler->call(self->x, self->coset_sampler, state);
+    mpz_add(rop, rop, self->x);
+  }
+  
   mpz_add(rop, rop, self->c_z);
 }
 
@@ -539,5 +688,19 @@ void dgs_disc_gauss_mp_clear(dgs_disc_gauss_mp_t *self) {
   if (self->upper_bound_minus_one) mpz_clear(self->upper_bound_minus_one);
   if (self->two_upper_bound_minus_one) mpz_clear(self->two_upper_bound_minus_one);
 
+  if (self->base_sampler) {
+    dgs_disc_gauss_mp_clear(self->base_sampler);
+  }
+  if (self->coefficients) {
+    for (int i = 0; i < self->n_coefficients;++i) {
+      if (self->coefficients[i])
+        mpz_clear(self->coefficients[i]);
+    }
+    free(self->coefficients);
+  }
+  if (self->coset_sampler) {
+    dgs_disc_gauss_mp_clear(self->coset_sampler);
+  }
+  
   free(self);
 }
