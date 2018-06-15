@@ -18,22 +18,61 @@ Clone this repository then do
 The library provides two types of algorithms to sample from discrete Gaussians.
 
 ### Samplers
+This type of algorithm is useful to produce a large number of samples
+from the same distribution, i.e. with fixed parameters. The parameters need to be 
+provided during initialization. Available algorithms are:
 
-This type of algorithm is useful to produce a large number of samples from the same distribution, i.e. with fixed parameters. The parameters need to be provided during initialization. Available algorithms are:
+  - `DGS_DISC_GAUSS_UNIFORM_TABLE` - classical rejection sampling, sampling from
+    the uniform distribution and accepted with probability proportional to
+    $\exp(-(x-c)²/(2σ²))$ where $\exp(-(x-c)²/(2σ²))$ is precomputed and stored in
+    a table. Any real-valued `c` is supported.
 
-  - `DGS_DISC_GAUSS_UNIFORM_TABLE` - classical rejection sampling, sampling from the uniform distribution and accepted with probability proportional to $\exp(-(x-c)²/(2σ²))$ where $\exp(-(x-c)²/(2σ²))$ is precomputed and stored in a table. Any real-valued `c` is supported.
+  - `DGS_DISC_GAUSS_UNIFORM_LOGTABLE` - samples are drawn from a uniform
+    distribution and accepted with probability proportional to
+    $\exp(-(x-c)²/(2σ²))$ where $\exp(-(x-c)²/(2σ²))$ is computed using
+    logarithmically many calls to Bernoulli distributions. Only integer-valued $c$
+    are supported.
 
-  - `DGS_DISC_GAUSS_UNIFORM_LOGTABLE` - samples are drawn from a uniform distribution and accepted with probability proportional to $\exp(-(x-c)²/(2σ²))$ where $\exp(-(x-c)²/(2σ²))$ is computed using logarithmically many calls to Bernoulli distributions. Only integer-valued $c$ are supported.
+  - `DGS_DISC_GAUSS_UNIFORM_ONLINE` - samples are drawn from a uniform
+    distribution and accepted with probability proportional to
+    $\exp(-(x-c)²/(2σ²))$ where $\exp(-(x-c)²/(2σ²))$ is computed in each
+    invocation. Typically this is very slow. Any real-valued $c$ is accepted.
 
-  - `DGS_DISC_GAUSS_UNIFORM_ONLINE` - samples are drawn from a uniform distribution and accepted with probability proportional to $\exp(-(x-c)²/(2σ²))$ where $\exp(-(x-c)²/(2σ²))$ is computed in each invocation. Typically this is very slow. Any real-valued $c$ is accepted.
+  - `DGS_DISC_SIGMA2_LOGTABLE` - samples are drawn from an easily samplable
+    distribution with $σ = k·σ₂$ where $σ₂ := \sqrt{1/(2\log 2)}$ and accepted
+    with probability proportional to $\exp(-(x-c)²/(2σ²))$ where
+    $\exp(-(x-c)²/(2σ²))$ is computed using logarithmically many calls to
+    Bernoulli distributions (but no calls to $\exp$). Note that this sampler
+    adjusts sigma to match $σ₂·k$ for some integer $k$.  Only integer-valued $c$
+    are supported.
 
-  - `DGS_DISC_SIGMA2_LOGTABLE` - samples are drawn from an easily samplable distribution with $σ = k·σ₂$ where $σ₂ := \sqrt{1/(2\log 2)}$ and accepted with probability proportional to $\exp(-(x-c)²/(2σ²))$ where $\exp(-(x-c)²/(2σ²))$ is computed using logarithmically many calls to Bernoulli distributions (but no calls to $\exp$). Note that this sampler adjusts sigma to match $σ₂·k$ for some integer $k$. Only integer-valued $c$ are supported.
-
-  - `DGS_DISC_GAUSS_ALIAS` - uses the [alias method](https://en.wikipedia.org/wiki/Alias_method). Setup costs are roughly $σ²$ (as currently implemented) and table sizes linear in $σ$, but sampling is then just a randomized lookup. Any real-valued $c$ is accepted.
+  - `DGS_DISC_GAUSS_ALIAS` - uses the [alias method](https://en.wikipedia.org/wiki/Alias_method).
+    Setup costs are roughly $σ²$ (as currently implemented) and table sizes linear
+    in $σ$, but sampling is then just a randomized lookup. Any real-valued $c$ is 
+    accepted.
+  
+  - `DGS_DISC_GAUSS_CONVOLUTION` - Applies the convolution technique to alias
+    sampling in order to reduce memory overhead and setup cost at the cost of
+    running time. This is suitable for large $σ$. Any real-valued $c$ is accepted.
     
   Algorithm 2-4 are described in:
 
-  Léo Ducas, Alain Durmus, Tancrède Lepoint and Vadim Lyubashevsky. *Lattice Signatures and Bimodal Gaussians*; in Advances in Cryptology – CRYPTO 2013; Lecture Notes in Computer Science Volume 8042, 2013, pp 40-56 [(PDF)](http://www.di.ens.fr/~lyubash/papers/bimodal.pdf)
+  Léo Ducas, Alain Durmus, Tancrède Lepoint and Vadim Lyubashevsky. *Lattice
+  Signatures and Bimodal Gaussians*; in Advances in Cryptology – CRYPTO 2013;
+  Lecture Notes in Computer Science Volume 8042, 2013, pp 40-56
+  [(PDF)](http://www.di.ens.fr/~lyubash/papers/bimodal.pdf)
+  
+  Algorithm 6 is described in:
+  
+  Thomas Pöppelmann, Léo Ducas, Tim Güneysu. *Enhanced Lattice-Based Signatures 
+  on Reconfigurable Hardware*; in Cryptographic Hardware and Embedded 
+  Systems – CHES 2014; Lecture Notes in Computer Science Volume 8731, 
+  2014, pp 353-370 [(PDF)](https://eprint.iacr.org/2014/254.pdf)
+  
+  Daniele Micciancio, Michael Walter. *Gaussian Sampling over the Integers: 
+  Efficient, Generic, Constant-Time*; in Advances in Cryptology – CRYPTO 2017;
+  Lecture Notes in Computer Science Volume 10402, 2017, pp 455-485
+  [(PDF)](https://eprint.iacr.org/2017/259.pdf) 
 
 ### Randomized rounders
 
