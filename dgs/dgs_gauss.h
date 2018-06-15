@@ -31,6 +31,15 @@
     Bernoulli distributions (but no calls to `\exp`). Note that this sampler
     adjusts sigma to match `σ₂·k` for some integer `k`.  Only integer-valued
     `c` are supported.
+   
+  - `DGS_DISC_GAUSS_ALIAS` - uses the [alias method](https://en.wikipedia.org/wiki/Alias_method).
+    Setup costs are roughly $σ²$ (as currently implemented) and table sizes linear
+    in $σ$, but sampling is then just a randomized lookup. Any real-valued $c$ is 
+    accepted.
+  
+  - `DGS_DISC_GAUSS_CONVOLUTION` - Applies the convolution technique to alias
+    sampling in order to reduce memory overhead and setup cost at the cost of
+    running time. This is suitable for large $σ$. Any real-valued $c$ is accepted.
 
   AVAILABLE PRECISIONS:
 
