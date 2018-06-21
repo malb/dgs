@@ -251,7 +251,7 @@ dgs_disc_gauss_dp_t *dgs_disc_gauss_dp_init(double sigma, double c, size_t tau, 
     long z2 = 1;
     
     // compute recursion level for convolution
-    while (table_size > (DGS_DISC_GAUSS_MAX_TABLE_SIZE_BYTES >> 1)) {
+    while (table_size > DGS_DISC_GAUSS_MAX_TABLE_SIZE_BYTES) {
       recursion_level++;
       z1 = floor(sqrt(current_sigma/(eta*2)));
       if (z1 == 0) {
