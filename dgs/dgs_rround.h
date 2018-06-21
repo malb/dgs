@@ -21,6 +21,9 @@
  - ``DGS_RROUND_KARNEY`` - Use Karney's algorithm. This is better than 
    uniform rejection sampling.
 
+ - ``DGS_RROUND_CONVOLUTION`` - Use convolution to reduce to alias 
+   sampling. 
+
   AVAILABLE PRECISIONS:
 
   - ``mp`` - multi-precision using MPFR, cf. ``dgs_gauss_mp.c``
@@ -54,6 +57,7 @@ typedef enum {
   DGS_RROUND_DEFAULT           = 0x0, //<pick algorithm
   DGS_RROUND_UNIFORM_ONLINE    = 0x1, //<call dgs_disc_gauss_mp_call_uniform_online
   DGS_RROUND_KARNEY            = 0x2, //<call dgs_disc_gauss_mp_call_karney
+  DGS_RROUND_CONVOLUTION       = 0x3, //<call dgs_disc_gauss_mp_call_convolution
 } dgs_rround_alg_t;
 
 struct _dgs_rround_mp_t;
@@ -70,6 +74,12 @@ typedef struct _dgs_rround_dp_t {
 
   dgs_bern_uniform_t *B;
   dgs_bern_dp_t *B_half_exp;
+  
+  dgs_disc_gauss_dp_t **base_samplers;
+  int log_base, digits, flips;
+  double s_bar2, bm_sample;
+  uint64_t mask, pool;
+  
 
   dgs_rround_alg_t algorithm;  //<  which algorithm to use
 
@@ -114,6 +124,13 @@ long dgs_rround_dp_call_uniform_online(dgs_rround_dp_t *self, double sigma, doub
    :param self: discrete Gaussian sampler
  */
 long dgs_rround_dp_call_karney(dgs_rround_dp_t *self, double sigma, double c);
+
+  /**
+   Sample from ``dgs_rround_dp_t`` using the convolution sampler
+
+   :param self: discrete Gaussian sampler
+ */
+long dgs_rround_dp_call_convolution(dgs_rround_dp_t *self, double sigma, double c);
 
 /**
    Free memory.
@@ -229,6 +246,19 @@ void dgs_rround_mp_call_uniform_online(mpz_t rop, dgs_rround_mp_t *self, const m
  */
 
 void dgs_rround_mp_call_karney(mpz_t rop, dgs_rround_mp_t *self, const mpfr_t sigma, const mpfr_t c, gmp_randstate_t state);
+
+/**
+  Sample from ``dgs_rround_mp_t`` using the convolution sampler.
+
+  :param rop: return value
+  :param self: discrete Gaussian rounder
+  :param sigma: noise parameter
+  :param c: center
+  :param state: state
+
+ */
+
+void dgs_rround_mp_call_convolution(mpz_t rop, dgs_rround_mp_t *self, const mpfr_t sigma, const mpfr_t c, gmp_randstate_t state);
 
 
 /**
