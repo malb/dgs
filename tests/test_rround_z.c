@@ -102,6 +102,12 @@ int main(int argc, char *argv[]) {
   test_ratios_dp( 4.0, 3, DGS_RROUND_KARNEY);
   test_ratios_dp(15.4, 3, DGS_RROUND_KARNEY);
   printf("\n");
+  
+  test_ratios_dp( 3.0, 6, DGS_RROUND_CONVOLUTION);
+  test_ratios_dp( 2.0, 6, DGS_RROUND_CONVOLUTION);
+  test_ratios_dp( 4.0, 3, DGS_RROUND_CONVOLUTION);
+  test_ratios_dp(15.4, 3, DGS_RROUND_CONVOLUTION);
+  printf("\n");
 
   printf("# testing [⌊c⌋-⌈στ⌉,…, ⌊c⌋+⌈στ⌉] boundaries #\n");
   test_uniform_boundaries_dp( 3.0, 0.0, 2, DGS_RROUND_UNIFORM_ONLINE);
@@ -121,6 +127,12 @@ int main(int argc, char *argv[]) {
   test_mean_dp(10.0, 0.0, 6, DGS_RROUND_KARNEY);
   test_mean_dp( 3.3, 1.0, 6, DGS_RROUND_KARNEY);
   test_mean_dp( 2.0, 1.5, 6, DGS_RROUND_KARNEY);
+  printf("\n");
+  
+  test_mean_dp( 3.0, 0.0, 6, DGS_RROUND_CONVOLUTION);
+  test_mean_dp(10.0, 0.0, 6, DGS_RROUND_CONVOLUTION);
+  test_mean_dp( 3.3, 1.0, 6, DGS_RROUND_CONVOLUTION);
+  test_mean_dp( 2.0, 1.5, 6, DGS_RROUND_CONVOLUTION);
   printf("\n");
 
   return 0;
