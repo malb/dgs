@@ -104,12 +104,22 @@ Available algorithms are:
   
   - `DGS_RROUND_KARNEY` - Karney's algorithm, similar in spirit to the sampler 
   `DGS_DISC_SIGMA2_LOGTABLE`, but without the need to precompute log tables and
-  without restriction on the center. 
+  without restriction on the center.
+  
+  - `DGS_RROUND_CONVOLUTION` - Reduces the rounding problem to the sampling 
+  problem and invokes alias sampling. 
   
   Karney's algorithm is described in:
   
   Charles F. F. Karney. *Sampling Exactly from the Normal Distribution*; in
   ACM Trans. Mathematical Software 42(1), 3:1-14 (Jan. 2016) [(PDF)](https://arxiv.org/pdf/1303.6257)
+  
+  The convolution approach to randomized rounding is described in
+  
+  Daniele Micciancio, Michael Walter. *Gaussian Sampling over the Integers: 
+  Efficient, Generic, Constant-Time*; in Advances in Cryptology – CRYPTO 2017;
+  Lecture Notes in Computer Science Volume 10402, 2017, pp 455-485
+  [(PDF)](https://eprint.iacr.org/2017/259.pdf) 
 
 ## Precisions ##
 
