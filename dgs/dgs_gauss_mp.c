@@ -383,7 +383,10 @@ dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(const mpfr_t sigma, const mpfr_t c, 
 
     mpfr_t p;
     mpfr_init2(p, prec);
-    while (mpfr_cmp_d(self->z, 0) > 0) {
+
+    // we must be done after range rounds
+    int n = 0;
+    while(mpfr_cmp_d(self->z,0) > 0 && n < range) {
       high = _dgs_disc_gauss_mp_max_in_rho(self, range);
       mpfr_mul_z(p, self->rho[low], self->two_upper_bound_minus_one, MPFR_RNDN);
 
@@ -394,7 +397,8 @@ dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(const mpfr_t sigma, const mpfr_t c, 
       mpfr_set(self->rho[low], self->y, MPFR_RNDU);
 
       low = _dgs_disc_gauss_mp_min_in_rho(self, range);
-      mpfr_sub(self->z, self->y, self->rho[low], MPFR_RNDD);  // z = avg - rho[low]
+      mpfr_sub(self->z, self->y, self->rho[low], MPFR_RNDD); // z = avg - rho[low]
+      ++n;
     }
 
     mpfr_clear(p);
@@ -416,8 +420,6 @@ dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(const mpfr_t sigma, const mpfr_t c, 
     mpfr_sqrt(eta, eta, MPFR_RNDN);
     mpfr_div(eta, eta, self->y, MPFR_RNDN);
     
-    mpfr_log(eta, eta, MPFR_RNDN);
-    
     mpfr_set(sigma1, sigma, MPFR_RNDN);
     mpfr_set_si(coset_sigma, 2, MPFR_RNDN);
     mpfr_sqrt(coset_sigma, coset_sigma, MPFR_RNDN);
@@ -437,7 +439,7 @@ dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(const mpfr_t sigma, const mpfr_t c, 
     
     long table_size = 2*ceil(mpfr_get_ui(sigma1, MPFR_RNDU)*tau) * (sizeof(dgs_bern_mp_t) + sizeof(mpz_t));
     int recursion_level = 0;
-    // for computing the recusrion level, we can probably get away with doubles:
+    // for computing the recursion level, we can probably get away with doubles:
     double current_sigma = mpfr_get_d(sigma1, MPFR_RNDN);
     long z1 = 1;
     long z2 = 1;
@@ -527,7 +529,10 @@ dgs_disc_gauss_mp_t *dgs_disc_gauss_mp_init(const mpfr_t sigma, const mpfr_t c, 
       mpfr_set_zero(self->z, 0);
       self->coset_sampler = dgs_disc_gauss_mp_init(coset_sigma, self->c_r, tau, DGS_DISC_GAUSS_ALIAS);
     }
+    
     self->base_sampler = dgs_disc_gauss_mp_init(self->y, self->z, tau, DGS_DISC_GAUSS_ALIAS);
+    
+    mpfr_clears(eta, sigma1, coset_sigma, (mpfr_ptr) NULL);
     
     break;
   }

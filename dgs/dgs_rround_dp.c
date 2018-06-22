@@ -206,6 +206,8 @@ long dgs_rround_dp_call_convolution(dgs_rround_dp_t *self, double sigma, double 
     return dgs_rround_dp_call_karney(self, sigma, c);
   }
   double K = sqrt(sigma2 - self->s_bar2);
+  // we use continuous gaussians instead of wide samplers
+  // this is faster and (provably) works the same way
   double xr = _box_muller(self);
   double c1 = c + K*xr;
   
