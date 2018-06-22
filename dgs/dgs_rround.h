@@ -49,6 +49,10 @@
 
 #include "dgs_gauss.h"
 
+#define DGS_RROUND_SIGMA_LOG2_MAX 30
+#define DGS_RROUND_SIGMA_MAX (1 << DGS_RROUND_SIGMA_LOG2_MAX)
+
+
 /**
    Available Algorithms
 */
@@ -217,6 +221,12 @@ typedef struct _dgs_rround_mp_t {
   mpfr_t y; // space for temporary rational number
   mpfr_t z; // space for temporary rational number
   mpfr_t tmp;
+  
+  dgs_disc_gauss_mp_t *wide_sampler;
+  dgs_disc_gauss_mp_t **base_samplers;
+  int log_base, digits, flips, pool;
+  mpfr_t s_bar2, bm_sample;
+  uint64_t mask;
 } dgs_rround_mp_t;
 
 dgs_rround_mp_t *dgs_rround_mp_init(size_t tau, dgs_rround_alg_t algorithm, mpfr_prec_t prec);
