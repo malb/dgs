@@ -1,5 +1,9 @@
 # Discrete Gaussians over the Integers #
 
+[![Build Status](https://travis-ci.com/malb/dgs.svg?branch=master)](https://travis-ci.com/malb/dgs) [![Build Status](https://img.shields.io/bitbucket/pipelines/malb/dgs.svg)](https://bitbucket.org/malb/dgs/addon/pipelines/home) 
+
+
+
 A discrete Gaussian distribution on the Integers is a distribution where the integer $x$ is sampled with probability proportional to $exp(-(x-c)²/(2σ²))$. It is denoted by $D_{σ,c}$ where `σ` is the width parameter (close to the standard deviation) and $c$ is the center.
 
 This library samples from this distributions.
