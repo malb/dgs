@@ -129,6 +129,12 @@ int main(int argc, char *argv[]) {
   test_ratios_dp(15.4, 3, DGS_DISC_GAUSS_UNIFORM_LOGTABLE);
   test_ratios_dp(15.4, 3, DGS_DISC_GAUSS_SIGMA2_LOGTABLE);
   test_ratios_dp(15.4, 3, DGS_DISC_GAUSS_ALIAS);
+  
+  // we need some large sigma test cases here, because
+  // everything else would just be retesting alias
+  test_ratios_dp(150, 6, DGS_DISC_GAUSS_CONVOLUTION);
+  test_ratios_dp(1500, 6, DGS_DISC_GAUSS_CONVOLUTION);
+  test_ratios_dp((1<<27), 6, DGS_DISC_GAUSS_CONVOLUTION);
   printf("\n");
 
   printf("# testing [⌊c⌋-⌈στ⌉,…, ⌊c⌋+⌈στ⌉] boundaries #\n");
@@ -155,6 +161,10 @@ int main(int argc, char *argv[]) {
   test_uniform_boundaries_dp( 3.3, 1.0, 1, DGS_DISC_GAUSS_ALIAS);
   test_uniform_boundaries_dp( 2.0, 2.0, 2, DGS_DISC_GAUSS_ALIAS);
   printf("\n");
+  
+  // Testing boundaries for convolution does not work in the 
+  // same way since the boundary constraints are imposed on
+  // the base sampler, but the convolution can exceed them
 
   printf("# testing c is center #\n");
   test_mean_dp( 3.0, 0.0, 6, DGS_DISC_GAUSS_UNIFORM_ONLINE);
@@ -179,7 +189,6 @@ int main(int argc, char *argv[]) {
   test_mean_dp(10.0, 0.0, 6, DGS_DISC_GAUSS_SIGMA2_LOGTABLE);
   test_mean_dp( 3.3, 1.0, 6, DGS_DISC_GAUSS_SIGMA2_LOGTABLE);
   test_mean_dp( 2.0, 2.0, 6, DGS_DISC_GAUSS_SIGMA2_LOGTABLE);
-
   printf("\n");
   
   test_mean_dp( 3.0, 0.0, 6, DGS_DISC_GAUSS_ALIAS);
@@ -187,7 +196,18 @@ int main(int argc, char *argv[]) {
   test_mean_dp( 3.3, 1.0, 6, DGS_DISC_GAUSS_ALIAS);
   test_mean_dp( 2.0, 2.0, 6, DGS_DISC_GAUSS_ALIAS);
   test_mean_dp( 2.0, 1.347, 6, DGS_DISC_GAUSS_ALIAS);
+  printf("\n");
 
+  // one would hope to test the convolution sampler with larger
+  // sigma, but in that case the mean test is likely to fail
+  // even if the sampler is correct. We still do some tests but this
+  // is mostly to ensure that the alias sampler is instatiated 
+  // correctly
+  test_mean_dp( 3.0, 0.0, 6, DGS_DISC_GAUSS_CONVOLUTION);
+  test_mean_dp(10.0, 0.0, 6, DGS_DISC_GAUSS_CONVOLUTION);
+  test_mean_dp( 3.3, 1.0, 6, DGS_DISC_GAUSS_CONVOLUTION);
+  test_mean_dp( 2.0, 2.0, 6, DGS_DISC_GAUSS_CONVOLUTION);
+  test_mean_dp( 2.0, 1.347, 6, DGS_DISC_GAUSS_CONVOLUTION);
   printf("\n");
 
   return 0;

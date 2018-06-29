@@ -23,6 +23,8 @@ void print_gauss_z_help(const char *name) {
   printf("      %d -- sample from uniform distribution, exp() calls tabulated\n", DGS_DISC_GAUSS_UNIFORM_TABLE);
   printf("      %d -- sample from uniform distribution, exp() calls as Bernoulli oracles\n", DGS_DISC_GAUSS_UNIFORM_LOGTABLE);
   printf("      %d -- sample from k⋅σ2 distribution, exp() calls as Bernoulli oracles \n", DGS_DISC_GAUSS_SIGMA2_LOGTABLE);
+  printf("      %d -- use alias method (precomputed table) \n", DGS_DISC_GAUSS_ALIAS);
+  printf("      %d -- use convolution technique with alias method \n", DGS_DISC_GAUSS_CONVOLUTION);
   printf(" p -- precision: 0 for double precision, 1 for arbitrary precision\n");
   printf(" n -- number of trials > 0 (default: 100000)\n");
 }

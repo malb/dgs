@@ -94,6 +94,8 @@ dgs_rround_mp_t *dgs_rround_mp_init(size_t tau, dgs_rround_alg_t algorithm, mpfr
   
   mpfr_init2(self->tmp, prec);
   
+  mpfr_inits2(prec, self->s_bar2, self->bm_sample, (mpfr_ptr)NULL);
+  
   self->tau = tau;
   
   mpz_init(self->sigma_z);
@@ -124,6 +126,99 @@ dgs_rround_mp_t *dgs_rround_mp_init(size_t tau, dgs_rround_alg_t algorithm, mpfr
     mpfr_set_str(half_exp, half_exp_str, 10, MPFR_RNDN);
     
     self->B_half_exp = dgs_bern_mp_init(half_exp);
+    
+    break;
+  }
+  
+  case DGS_RROUND_CONVOLUTION: {
+    self->call = dgs_rround_mp_call_convolution;
+    
+    // we set parameters so that the memory does not exceed 
+    // 2*DGS_DISC_GAUSS_MAX_TABLE_SIZE_BYTES
+    //~ double eta = sqrt((p+1)*log(2))/pi;
+    mpfr_set_ui(self->tmp, DGS_RROUND_SIGMA_MAX, MPFR_RNDN);
+    mpfr_set_d(self->y, 0.0, MPFR_RNDN);
+    self->wide_sampler = dgs_disc_gauss_mp_init(self->tmp, self->y, tau, DGS_DISC_GAUSS_CONVOLUTION);
+    
+    mpfr_t eta, base_sigma;
+    mpfr_inits2(prec, eta, base_sigma, NULL);
+    self->pool = 0;
+    mpfr_const_log2(eta, MPFR_RNDN);
+    mpfr_const_pi(self->y, MPFR_RNDN);
+    mpfr_mul_si(eta, eta, prec + 1, MPFR_RNDN);
+    mpfr_sqrt(eta, eta, MPFR_RNDN);
+    mpfr_div(eta, eta, self->y, MPFR_RNDN);
+    
+    //~ double base_sigma = 2.5;  // sigma for 2^b base samplers
+    mpfr_set_si(base_sigma, 2, MPFR_RNDN);
+    mpfr_sqrt(base_sigma, base_sigma, MPFR_RNDN);
+    mpfr_mul(base_sigma, base_sigma, eta, MPFR_RNDN);
+    
+    long base_sampler_size = 2*ceil(mpfr_get_ui(base_sigma, MPFR_RNDU)*tau) * (sizeof(dgs_bern_mp_t) + sizeof(mpz_t));
+    int base = (DGS_DISC_GAUSS_MAX_TABLE_SIZE_BYTES)/base_sampler_size;
+    self->log_base = 0;
+    while (base >>= 1) { ++self->log_base; } // we want a power of 2
+    base = 1 << self->log_base;
+    self->mask = __DGS_LSB_BITMASK(self->log_base);
+    
+    // we can now actually reduce base_sigma a little to save some 
+    // more memory and increase the range of this function w.r.t. sigma
+    // base_sigma = sqrt(((double)(base + 1))/base)*eta; 
+    mpfr_set_si(base_sigma, base, MPFR_RNDN);
+    mpfr_add_si(base_sigma, base_sigma, 1, MPFR_RNDN);
+    mpfr_div_si(base_sigma, base_sigma, base, MPFR_RNDN);
+    mpfr_sqrt(base_sigma, base_sigma, MPFR_RNDN);
+    mpfr_mul(base_sigma, base_sigma, eta, MPFR_RNDN);
+    
+    self->base_samplers = (dgs_disc_gauss_mp_t**)malloc(sizeof(dgs_disc_gauss_mp_t*)*base);
+    if (!self->base_samplers){
+      dgs_rround_mp_clear(self);
+      dgs_die("out of memory");
+    }
+    
+    for (int i = 0; i < base; ++i) {
+      // center = ((double)i)/base
+      mpfr_set_d(self->tmp, ((double)i)/base, MPFR_RNDN);
+      self->base_samplers[i] = dgs_disc_gauss_mp_init(base_sigma, self->tmp, tau, DGS_DISC_GAUSS_ALIAS);
+    }
+    
+    // round half the precision bits using gaussian rounding
+    // do the rest using bernoulli (linear interpolation of gaussian)
+    self->digits = (int) ceil(((double)prec)/(2*self->log_base));
+    
+    // compute rr_sigma2
+    //~ self->s_bar2 = 1;
+    mpfr_set_si(self->s_bar2, 1, MPFR_RNDN);
+    
+    //~ long double t = 1.0/ (base*base);
+    mpfr_set_si(self->y, base, MPFR_RNDN); // y = t
+    mpfr_mul(self->y, self->y, self->y, MPFR_RNDN);
+    mpfr_si_div(self->y, 1, self->y, MPFR_RNDN);
+    
+    //~ long double s = 1;
+    mpfr_set_si(self->z, 1, MPFR_RNDN); // z = s
+    for (int i = 1; i < self->digits; ++i) {
+        //~ s *= t;
+        mpfr_mul(self->z, self->z, self->y, MPFR_RNDN);
+        //~ self->s_bar2 += s;
+        mpfr_add(self->s_bar2, self->s_bar2, self->z, MPFR_RNDN);
+    }
+    //~ self->s_bar2 *= (base_sigma*base_sigma);
+    mpfr_mul(self->s_bar2, self->s_bar2, base_sigma, MPFR_RNDN);
+    mpfr_mul(self->s_bar2, self->s_bar2, base_sigma, MPFR_RNDN);
+    
+    // we use karney as fallback for small sigma, so we initialize it
+    //~ self->B = dgs_bern_uniform_init(0);
+    //~ self->B_half_exp = dgs_bern_dp_init(exp(-.5));
+    self->B = dgs_bern_uniform_init(0);
+    
+    char half_exp_str[] = "0.60653065971263342360379953499118045344191813548718695568289";
+    mpfr_t half_exp; mpfr_init2(half_exp, prec);
+    mpfr_set_str(half_exp, half_exp_str, 10, MPFR_RNDN);
+    
+    self->B_half_exp = dgs_bern_mp_init(half_exp);
+    
+    mpfr_clears(eta, base_sigma, (mpfr_ptr) NULL);
     
     break;
   }
@@ -224,6 +319,81 @@ void dgs_rround_mp_call_karney(mpz_t rop, dgs_rround_mp_t *self, const mpfr_t si
   } while (1);
 }
 
+void dgs_rround_mp_call_convolution(mpz_t rop, dgs_rround_mp_t *self, const mpfr_t sigma, const mpfr_t c, gmp_randstate_t state) {
+  //~ double sigma2 = sigma*sigma;
+  mpfr_mul(self->y, sigma, sigma, MPFR_RNDN); // sigma2 = self->y
+  
+  // we need sigma to be larger than s_bar and smaller than sigma_max
+  // otherwise fall back to karney
+  //~ if (self->s_bar2 > sigma2) {
+  if (mpfr_cmp(self->s_bar2, self->y) > 0 || mpfr_cmp_ui(sigma, DGS_RROUND_SIGMA_MAX) > 0) {
+    dgs_rround_mp_call_karney(rop, self, sigma, c, state);
+    return;
+  }
+  //~ double K = sqrt(sigma2 - self->s_bar2);
+  mpfr_sub(self->y, self->y, self->s_bar2, MPFR_RNDN);
+  mpfr_sqrt(self->y, self->y, MPFR_RNDN); // self->y = K
+  
+  mpfr_div_2si(self->y, self->y, DGS_RROUND_SIGMA_LOG2_MAX, MPFR_RNDN);
+  
+  // we use a dicreet wide sampler instead of a standard continuous 
+  // gaussian (like in dp) here, because this is faster than mpfr_grandom
+  // once nrandom is available (MPFR 4) it might be better to switch
+  // back to continuous gaussians to adjust width
+  self->wide_sampler->call(self->x, self->wide_sampler, state);
+  
+  mpfr_mul_z(self->y, self->y, self->x, MPFR_RNDN);
+  
+  //~ double c1 = c + K*xr;
+  mpfr_add(self->y, self->y, c, MPFR_RNDN); // c1 = self->y
+  
+  //~ long c1_z = (long) floor(c1);
+  //~ c1 -= floor(c1); // 0 <= c1 < 1
+  mpfr_get_z(self->c_z, self->y, MPFR_RNDD);
+  mpfr_sub_z(self->y, self->y, self->c_z, MPFR_RNDN);
+  assert(mpfr_sgn(self->y) >= 0);
+  assert(mpfr_cmp_ui(self->y, 1) < 1);
+  //~ c1 *= (1UL << self->digits*self->log_base);
+  //~ int64_t center = (int64_t) c1;
+  //~ c1 -= center; // 0 <= c1 < 1
+  mpfr_mul_2ui(self->y, self->y, self->digits*self->log_base, MPFR_RNDN);
+  mpfr_get_z(rop, self->y, MPFR_RNDD);
+  mpfr_sub_z(self->y, self->y, rop, MPFR_RNDN);
+  assert(mpfr_sgn(self->y) >= 0);
+  assert(mpfr_cmp_ui(self->y, 1) < 1);
+  
+  //~ if (drand48() < c1)
+    //~ ++center;
+  mpfr_urandom(self->z, state, MPFR_RNDN);
+  //~ if (mpfr_cmp(self->y, self->z) > 0) {
+  if (mpfr_greater_p(self->y, self->z)) {
+    mpz_add_ui(rop, rop, 1);
+  }
+  
+  long center_lsbs;
+  for (int i = 0; i < self->digits; ++i) {
+    //~ long x = self->base_samplers[center & self->mask]->call(self->base_samplers[center & self->mask]);
+    center_lsbs = mpz_get_si(rop) & self->mask; // mpz_get_si returns the LSBs that fit into signed long int
+    
+    self->base_samplers[center_lsbs]->call(self->x, self->base_samplers[center_lsbs], state);
+    //~ if ( (self->mask & center) > 0 && center < 0)
+            //~ x -= 1;
+    if ( center_lsbs > 0 && mpz_sgn(rop) < 0)
+            mpz_sub_ui(self->x, self->x, 1);
+    
+    //~ for (int j = 0; j < self->log_base; ++j) {
+      //~ center /= 2;
+    //~ }
+    //~ center += x;
+    
+    mpz_tdiv_q_2exp(rop, rop, self->log_base);
+    mpz_add(rop, rop, self->x);
+  }
+  
+  //~ return center + c1_z;
+  mpz_add(rop, rop, self->c_z);
+}
+
 void dgs_rround_mp_clear(dgs_rround_mp_t *self) {
   mpz_clear(self->x);
   mpfr_clear(self->y);
@@ -246,5 +416,21 @@ void dgs_rround_mp_clear(dgs_rround_mp_t *self) {
   if (self->B) dgs_bern_uniform_clear(self->B);
   if (self->B_half_exp) dgs_bern_mp_clear(self->B_half_exp);
 
+  if (self->s_bar2) 
+    mpfr_clear(self->s_bar2);
+  if (self->bm_sample) 
+    mpfr_clear(self->bm_sample);
+  if (self->base_samplers) {
+    for (int i = 0; i < (1 << self->log_base); ++i) {
+      if (self->base_samplers[i]) {
+        dgs_disc_gauss_mp_clear(self->base_samplers[i]);
+      }
+    }
+    free(self->base_samplers);
+  }
+  
+  if (self->wide_sampler)
+    dgs_disc_gauss_mp_clear(self->wide_sampler);
+  
   free(self);
 }

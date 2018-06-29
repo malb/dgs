@@ -68,6 +68,10 @@ provided during initialization. Available algorithms are:
     Setup costs are roughly $σ²$ (as currently implemented) and table sizes linear
     in $σ$, but sampling is then just a randomized lookup. Any real-valued $c$ is 
     accepted.
+  
+  - `DGS_DISC_GAUSS_CONVOLUTION` - Applies the convolution technique to alias
+    sampling in order to reduce memory overhead and setup cost at the cost of
+    running time. This is suitable for large $σ$. Any real-valued $c$ is accepted.
     
   Algorithm 2-4 are described in:
 
@@ -75,6 +79,18 @@ provided during initialization. Available algorithms are:
   Signatures and Bimodal Gaussians*; in Advances in Cryptology – CRYPTO 2013;
   Lecture Notes in Computer Science Volume 8042, 2013, pp 40-56
   [(PDF)](http://www.di.ens.fr/~lyubash/papers/bimodal.pdf)
+  
+  Algorithm 6 is described in:
+  
+  Thomas Pöppelmann, Léo Ducas, Tim Güneysu. *Enhanced Lattice-Based Signatures 
+  on Reconfigurable Hardware*; in Cryptographic Hardware and Embedded 
+  Systems – CHES 2014; Lecture Notes in Computer Science Volume 8731, 
+  2014, pp 353-370 [(PDF)](https://eprint.iacr.org/2014/254.pdf)
+  
+  Daniele Micciancio, Michael Walter. *Gaussian Sampling over the Integers: 
+  Efficient, Generic, Constant-Time*; in Advances in Cryptology – CRYPTO 2017;
+  Lecture Notes in Computer Science Volume 10402, 2017, pp 455-485
+  [(PDF)](https://eprint.iacr.org/2017/259.pdf) 
 
 ### Randomized Rounders
 This type of algorithm is useful to produce samples where the parameters of 
@@ -88,12 +104,22 @@ Available algorithms are:
   
   - `DGS_RROUND_KARNEY` - Karney's algorithm, similar in spirit to the sampler 
   `DGS_DISC_SIGMA2_LOGTABLE`, but without the need to precompute log tables and
-  without restriction on the center. 
+  without restriction on the center.
+  
+  - `DGS_RROUND_CONVOLUTION` - Reduces the rounding problem to the sampling 
+  problem and invokes alias sampling. 
   
   Karney's algorithm is described in:
   
   Charles F. F. Karney. *Sampling Exactly from the Normal Distribution*; in
   ACM Trans. Mathematical Software 42(1), 3:1-14 (Jan. 2016) [(PDF)](https://arxiv.org/pdf/1303.6257)
+  
+  The convolution approach to randomized rounding is described in
+  
+  Daniele Micciancio, Michael Walter. *Gaussian Sampling over the Integers: 
+  Efficient, Generic, Constant-Time*; in Advances in Cryptology – CRYPTO 2017;
+  Lecture Notes in Computer Science Volume 10402, 2017, pp 455-485
+  [(PDF)](https://eprint.iacr.org/2017/259.pdf) 
 
 ## Precisions ##
 

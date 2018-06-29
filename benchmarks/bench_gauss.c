@@ -72,6 +72,7 @@ const char *alg_to_str(dgs_disc_gauss_alg_t alg) {
   case DGS_DISC_GAUSS_UNIFORM_LOGTABLE: return "uniform+logtable";
   case DGS_DISC_GAUSS_SIGMA2_LOGTABLE: return "sigma2+logtable";
   case DGS_DISC_GAUSS_ALIAS:           return "alias";
+  case DGS_DISC_GAUSS_CONVOLUTION:           return "convolution";
   default: return "unknown";
   }
 }
