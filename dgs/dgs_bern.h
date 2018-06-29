@@ -52,13 +52,13 @@
    Number of bits sampled at once in ``dgs_bern_uniform_t``
 */
 
-#define DGS_BERN_UNIFORM_DEFAULT_LENGTH (sizeof(unsigned long)*8)
+#define DGS_BERN_UNIFORM_DEFAULT_LENGTH (sizeof(unsigned long) * 8)
 
 /**
    Maximum number of bits sampled at once in ``dgs_bern_uniform_t``
 */
 
-#define DGS_BERN_UNIFORM_MAX_LENGTH (sizeof(unsigned long)*8)
+#define DGS_BERN_UNIFORM_MAX_LENGTH (sizeof(unsigned long) * 8)
 
 /**
    Number of blocks allocated in one go in ``dgs_bern_exp_mp_t`` and ``dgs_bern_exp_dp_t``
@@ -81,19 +81,19 @@ typedef struct {
      Number of bits we sample in each go.
   */
 
-  size_t   length;
+  size_t length;
 
   /**
      Number of bits we have consumed yet.
   */
 
-  size_t   count;
+  size_t count;
 
   /**
      We sample to this ``mpz_t``.
   */
 
-  mpz_t    tmp;
+  mpz_t tmp;
 
   /**
      We store the pool of random bits here.
@@ -113,7 +113,7 @@ typedef struct {
 
 */
 
-dgs_bern_uniform_t* dgs_bern_uniform_init(size_t length);
+dgs_bern_uniform_t *dgs_bern_uniform_init(size_t length);
 
 /**
    Sample a new uniformly random bit.
@@ -129,7 +129,7 @@ static inline unsigned long dgs_bern_uniform_call(dgs_bern_uniform_t *self, gmp_
 
   if (__DGS_UNLIKELY(self->count == self->length)) {
     mpz_urandomb(self->tmp, state, self->length);
-    self->pool = mpz_get_ui(self->tmp);
+    self->pool  = mpz_get_ui(self->tmp);
     self->count = 0;
   }
 
@@ -149,7 +149,7 @@ static inline unsigned long dgs_bern_uniform_call(dgs_bern_uniform_t *self, gmp_
 static inline unsigned long dgs_bern_uniform_call_libc(dgs_bern_uniform_t *self) {
   assert(self != NULL);
   if (__DGS_UNLIKELY(self->count == self->length)) {
-    self->pool = _dgs_randomb_libc(self->length);
+    self->pool  = _dgs_randomb_libc(self->length);
     self->count = 0;
   }
 
@@ -166,9 +166,7 @@ static inline unsigned long dgs_bern_uniform_call_libc(dgs_bern_uniform_t *self)
 
  */
 
-static inline void dgs_bern_uniform_flush_cache(dgs_bern_uniform_t *self) {
-  self->count = self->length;
-}
+static inline void dgs_bern_uniform_flush_cache(dgs_bern_uniform_t *self) { self->count = self->length; }
 
 /**
    Clear uniformly random bit sampler.
@@ -188,7 +186,7 @@ typedef struct {
      Return 1 with probability `p`
   */
   mpfr_t p;
-  mpfr_t tmp; //< used internally
+  mpfr_t tmp;  //< used internally
 } dgs_bern_mp_t;
 
 /**
@@ -249,7 +247,6 @@ typedef struct {
 
 dgs_bern_dp_t *dgs_bern_dp_init(double p);
 
-
 /**
    Return 1 with probability `p`.
 
@@ -270,7 +267,6 @@ long dgs_bern_dp_call(dgs_bern_dp_t *self);
  */
 
 void dgs_bern_dp_clear(dgs_bern_dp_t *self);
-
 
 /**
    Multi-precision Bernoulli distribution with `p = exp(-x/f)` for positive integers `x`.
@@ -309,8 +305,7 @@ typedef struct {
 
  */
 
-dgs_bern_exp_mp_t* dgs_bern_exp_mp_init(mpfr_t f, size_t l);
-
+dgs_bern_exp_mp_t *dgs_bern_exp_mp_init(mpfr_t f, size_t l);
 
 /**
    Return 1 with probability `exp(-x/f)`.
@@ -321,7 +316,6 @@ dgs_bern_exp_mp_t* dgs_bern_exp_mp_init(mpfr_t f, size_t l);
 
  */
 long dgs_bern_exp_mp_call(dgs_bern_exp_mp_t *self, mpz_t x, gmp_randstate_t state);
-
 
 /**
    Clear Bernoulli sampler family.
@@ -369,7 +363,7 @@ typedef struct {
 
  */
 
-dgs_bern_exp_dp_t* dgs_bern_exp_dp_init(double f, size_t l);
+dgs_bern_exp_dp_t *dgs_bern_exp_dp_init(double f, size_t l);
 
 /**
    Return 1 with probability `exp(-x/f)`.
@@ -391,4 +385,4 @@ long dgs_bern_exp_dp_call(dgs_bern_exp_dp_t *self, long x);
 
 void dgs_bern_exp_dp_clear(dgs_bern_exp_dp_t *self);
 
-#endif //DGS_BERN__H
+#endif  // DGS_BERN__H

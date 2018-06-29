@@ -36,3 +36,6 @@ libdgs.la
 /tests/.dirstamp
 /dgs/config.h.in~
 /dgs/config.h.in
+/benchmarks/bench_rround
+/test_rround_z
+/test_rround_z.trs

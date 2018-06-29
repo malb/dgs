@@ -8,8 +8,8 @@ libdgs_la_SOURCES = dgs/dgs_bern.c \
 	dgs/dgs_gauss_dp.c	\
 	dgs/dgs_gauss_mp.c	\
 	dgs/dgs_rround_dp.c	\
-	dgs/dgs_rround_mp.c	
-	
+	dgs/dgs_rround_mp.c
+
 
 pkgincludesubdir = $(includedir)/dgs
 
@@ -35,6 +35,12 @@ TESTS = test_gauss_z test_rround_z
 # benchmarketing
 
 SUBDIRS = . benchmarks
+
+CLANGFORMAT       ?= clang-format
+.PHONY: check-style
+
+fix-style:
+	$(CLANGFORMAT) -i --style=file dgs/*.{c,h}
 
 clean-local:
 	(cd tests; make clean; cd ..)

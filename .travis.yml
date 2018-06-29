@@ -1,0 +1,30 @@
+sudo: required
+
+dist: trusty
+
+language: c
+
+matrix:
+  include:
+  - os: linux
+    compiler: gcc
+    addons:
+      apt:
+        packages:
+        - libgmp-dev
+        - libmpfr-dev
+
+
+before_script:
+  - "autoreconf -i"
+  - "./configure"
+
+script:
+  - make
+  - make check
+  - make distcheck
+
+notifications:
+  on_success: change
+  on_failure: always
+

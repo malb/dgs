@@ -38,11 +38,11 @@
 #ifndef DGS_MISC__H
 #define DGS_MISC__H
 
-#include <stddef.h>
-#include <stdlib.h>
 #include <assert.h>
-#include <stdio.h>
 #include <stdarg.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 /** A hack around the missing random() and drand48 in Windows */
 #ifndef lrand48
@@ -58,39 +58,35 @@
  * \brief Macro to help with branch prediction.
  */
 
-#define __DGS_LIKELY(cond)    __builtin_expect ((cond) != 0, 1)
+#define __DGS_LIKELY(cond) __builtin_expect((cond) != 0, 1)
 
 /**
  * \brief Macro to help with branch prediction.
  */
 
-#define __DGS_UNLIKELY(cond)  __builtin_expect ((cond) != 0, 0)
+#define __DGS_UNLIKELY(cond) __builtin_expect((cond) != 0, 0)
 
-
-static int const dgs_radix = sizeof(unsigned long)<<3;
+static int const dgs_radix          = sizeof(unsigned long) << 3;
 static unsigned long const dgs_ffff = -1;
 
 #define __DGS_LSB_BITMASK(n) (dgs_ffff >> (dgs_radix - (n)) % dgs_radix)
 
-
 static inline unsigned long _dgs_randomb_libc(size_t nbits) {
   size_t n = __DGS_LSB_BITMASK(nbits);
   assert(((RAND_MAX | (RAND_MAX >> 1)) == RAND_MAX));
-  if (__DGS_LIKELY(n <= RAND_MAX))
-    return random() & n;
+  if (__DGS_LIKELY(n <= RAND_MAX)) return random() & n;
   assert(RAND_MAX >= __DGS_LSB_BITMASK(22));
-  unsigned long pool = (((unsigned long)random()) << 0) ^ (((unsigned long)random()) << 22) ^ (((unsigned long)random()) << 44);
+  unsigned long pool =
+      (((unsigned long)random()) << 0) ^ (((unsigned long)random()) << 22) ^ (((unsigned long)random()) << 44);
   return pool & n;
 }
 
 static inline unsigned long _dgs_randomm_libc(unsigned long n) {
   assert(n < RAND_MAX);
   unsigned long r;
-  unsigned long k = RAND_MAX/n;
-  do {
-    r = (unsigned long)random();
-  } while (r >= k*n);
-  return r%n;
+  unsigned long k = RAND_MAX / n;
+  do { r = (unsigned long)random(); } while (r >= k * n);
+  return r % n;
 }
 
 static inline void dgs_die(const char *msg, ...) {
@@ -102,4 +98,4 @@ static inline void dgs_die(const char *msg, ...) {
   abort();
 }
 
-#endif //DGS_MISC__H
+#endif  // DGS_MISC__H
