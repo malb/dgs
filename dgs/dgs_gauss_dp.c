@@ -204,14 +204,14 @@ dgs_disc_gauss_dp_t *dgs_disc_gauss_dp_init(double sigma, double c, size_t tau, 
     for (long x = 0; x < self->two_upper_bound_minus_one; x++) { self->rho[x] *= sum; }
 
     // compute bias and alias
-    self->alias = (long*)malloc(sizeof(long)*self->two_upper_bound_minus_one);
-    self->bias = (dgs_bern_dp_t**)malloc(sizeof(dgs_bern_dp_t*)*self->two_upper_bound_minus_one);
-    
-    if (!self->alias || !self->bias){
+    self->alias = (long *)malloc(sizeof(long) * self->two_upper_bound_minus_one);
+    self->bias  = (dgs_bern_dp_t **)malloc(sizeof(dgs_bern_dp_t *) * self->two_upper_bound_minus_one);
+
+    if (!self->alias || !self->bias) {
       dgs_disc_gauss_dp_clear(self);
       dgs_die("out of memory");
     }
-    
+
     // simple robin hood strategy approximates good alias
     // this precomputation takes ~n^2, but could be reduced by
     // using better data structures to compute min and max
@@ -235,82 +235,74 @@ dgs_disc_gauss_dp_t *dgs_disc_gauss_dp_init(double sigma, double c, size_t tau, 
 
   case DGS_DISC_GAUSS_CONVOLUTION: {
     self->call = dgs_disc_gauss_dp_call_convolution;
-    
-    double eta = 2;
-    double sigma1 = sigma;
-    double coset_sigma = sqrt(2)*eta;
+
+    double eta         = 2;
+    double sigma1      = sigma;
+    double coset_sigma = sqrt(2) * eta;
     if (fabs(self->c_r) > 0) {
       // we might need to adjust the center
-      sigma1 = sqrt(sigma*sigma - coset_sigma*coset_sigma);
+      sigma1 = sqrt(sigma * sigma - coset_sigma * coset_sigma);
     }
-    
-    long table_size = 2*ceil(sigma1*tau) * (sizeof(dgs_bern_dp_t) + sizeof(long));
-    int recursion_level = 0;
+
+    long table_size      = 2 * ceil(sigma1 * tau) * (sizeof(dgs_bern_dp_t) + sizeof(long));
+    int recursion_level  = 0;
     double current_sigma = sigma1;
-    long z1 = 1;
-    long z2 = 1;
-    
+    long z1              = 1;
+    long z2              = 1;
+
     // compute recursion level for convolution
     while (table_size > DGS_DISC_GAUSS_MAX_TABLE_SIZE_BYTES) {
       recursion_level++;
-      z1 = floor(sqrt(current_sigma/(eta*2)));
+      z1 = floor(sqrt(current_sigma / (eta * 2)));
       if (z1 == 0) {
         dgs_disc_gauss_dp_clear(self);
         dgs_die("MAX_TABLE_SIZE too small to store alias sampler!");
       }
       z2 = (z1 > 1) ? z1 - 1 : 1;
-      current_sigma /= (sqrt(z1*z1 + z2*z2));
-      table_size = 2*ceil(current_sigma*tau) * (sizeof(dgs_bern_dp_t) + sizeof(long));
+      current_sigma /= (sqrt(z1 * z1 + z2 * z2));
+      table_size = 2 * ceil(current_sigma * tau) * (sizeof(dgs_bern_dp_t) + sizeof(long));
     }
-    
+
     self->n_coefficients = 1 << recursion_level;
-    self->coefficients = (long*)malloc(sizeof(long)*self->n_coefficients);
-    for (int i = 0; i < self->n_coefficients; ++i) {
-      self->coefficients[i] = 1;
-    }
-    
+    self->coefficients   = (long *)malloc(sizeof(long) * self->n_coefficients);
+    for (int i = 0; i < self->n_coefficients; ++i) { self->coefficients[i] = 1; }
+
     // if there is no convolution, we simply forward to alias and
     // so we won't need adjustment of sigma, even if sampling off center
-    current_sigma = (recursion_level == 0)? sigma : sigma1;
-    
+    current_sigma = (recursion_level == 0) ? sigma : sigma1;
+
     // redo above computation to store coefficients
     for (int i = 0; i < recursion_level; ++i) {
-      z1 = floor(sqrt(current_sigma/(eta*2)));
+      z1 = floor(sqrt(current_sigma / (eta * 2)));
       z2 = (z1 > 1) ? z1 - 1 : 1;
-      
+
       // we unroll the recursion on the coefficients on the fly
       // so we don't have to use recursion during the call
       int off = (1 << recursion_level - i - 1);
       for (int j = 0; j < (1 << i); ++j) {
-        for (int k = 0; k < off;++k) {
-          self->coefficients[2*j*off + k] *= z1;
-        }
+        for (int k = 0; k < off; ++k) { self->coefficients[2 * j * off + k] *= z1; }
       }
-      
+
       for (int j = 0; j < (1 << i); ++j) {
-        for (int k = 0; k < off;++k) {
-          self->coefficients[(2*j + 1)*off + k] *= z2;
-        }
+        for (int k = 0; k < off; ++k) { self->coefficients[(2 * j + 1) * off + k] *= z2; }
       }
-      
-      current_sigma /= (sqrt(z1*z1 + z2*z2));
+
+      current_sigma /= (sqrt(z1 * z1 + z2 * z2));
     }
-    
-    double base_c = self->c_r;
+
+    double base_c       = self->c_r;
     self->coset_sampler = NULL;
     if (recursion_level > 0 && fabs(self->c_r) > 0) {
       // we'll need to adjust the center
-      base_c = 0.0;
+      base_c              = 0.0;
       self->coset_sampler = dgs_disc_gauss_dp_init(coset_sigma, self->c_r, tau, DGS_DISC_GAUSS_ALIAS);
     }
     self->base_sampler = dgs_disc_gauss_dp_init(current_sigma, base_c, tau, DGS_DISC_GAUSS_ALIAS);
-    
+
     break;
   }
-  
-  default:
-    dgs_disc_gauss_dp_clear(self);
-    dgs_die("unknown algorithm %d", algorithm);
+
+  default: dgs_disc_gauss_dp_clear(self); dgs_die("unknown algorithm %d", algorithm);
   }
   return self;
 }
@@ -363,13 +355,11 @@ long dgs_disc_gauss_dp_call_alias(dgs_disc_gauss_dp_t *self) {
 long dgs_disc_gauss_dp_call_convolution(dgs_disc_gauss_dp_t *self) {
   long x = 0;
   for (int i = 0; i < self->n_coefficients; ++i) {
-    x += self->coefficients[i]*self->base_sampler->call(self->base_sampler);
+    x += self->coefficients[i] * self->base_sampler->call(self->base_sampler);
   }
-  
+
   // adjust center if necessary
-  if (self->coset_sampler) {
-    x += self->coset_sampler->call(self->coset_sampler);
-  }
+  if (self->coset_sampler) { x += self->coset_sampler->call(self->coset_sampler); }
   return x + self->c_z;
 }
 
@@ -413,15 +403,9 @@ void dgs_disc_gauss_dp_clear(dgs_disc_gauss_dp_t *self) {
     }
     free(self->bias);
   }
-  if (self->base_sampler) {
-    dgs_disc_gauss_dp_clear(self->base_sampler);
-  }
-  if (self->coefficients) {
-    free(self->coefficients);
-  }
-  if (self->coset_sampler) {
-    dgs_disc_gauss_dp_clear(self->coset_sampler);
-  }
-  
+  if (self->base_sampler) { dgs_disc_gauss_dp_clear(self->base_sampler); }
+  if (self->coefficients) { free(self->coefficients); }
+  if (self->coset_sampler) { dgs_disc_gauss_dp_clear(self->coset_sampler); }
+
   free(self);
 }

@@ -60,14 +60,14 @@ double _box_muller(dgs_rround_dp_t *self) {
     self->pool--;
     return self->bm_sample;
   }
-  
+
   double r1 = drand48();
   double r2 = drand48();
-  
-  double R = sqrt(-2*log(r1));
-  self->bm_sample = R*cos(2*M_PI*r2);
-  self->pool = 1;
-  return R*sin(2*M_PI*r2);
+
+  double R        = sqrt(-2 * log(r1));
+  self->bm_sample = R * cos(2 * M_PI * r2);
+  self->pool      = 1;
+  return R * sin(2 * M_PI * r2);
 }
 
 dgs_rround_dp_t *dgs_rround_dp_init(size_t tau, dgs_rround_alg_t algorithm) {
@@ -94,58 +94,56 @@ dgs_rround_dp_t *dgs_rround_dp_init(size_t tau, dgs_rround_alg_t algorithm) {
   }
   case DGS_RROUND_CONVOLUTION: {
     self->call = dgs_rround_dp_call_convolution;
-    
+
     self->pool = 0;
-    
-    // we set parameters so that the memory does not exceed 
+
+    // we set parameters so that the memory does not exceed
     // DGS_DISC_GAUSS_MAX_TABLE_SIZE_BYTES
-    double eta = 2;            // smoothing paramter
+    double eta        = 2;    // smoothing paramter
     double base_sigma = 2.5;  // sigma for 2^b base samplers
-    
-    long base_sampler_size = 2*ceil(base_sigma*tau) * (sizeof(dgs_bern_dp_t) + sizeof(long));
-    int base = (DGS_DISC_GAUSS_MAX_TABLE_SIZE_BYTES)/base_sampler_size;
-    self->log_base = 0;
-    while (base >>= 1) { ++self->log_base; } // we want a power of 2
-    base = 1 << self->log_base;
+
+    long base_sampler_size = 2 * ceil(base_sigma * tau) * (sizeof(dgs_bern_dp_t) + sizeof(long));
+    int base               = (DGS_DISC_GAUSS_MAX_TABLE_SIZE_BYTES) / base_sampler_size;
+    self->log_base         = 0;
+    while (base >>= 1) { ++self->log_base; }  // we want a power of 2
+    base       = 1 << self->log_base;
     self->mask = __DGS_LSB_BITMASK(self->log_base);
-    // we can now actually reduce base_sigma a little to save some 
+    // we can now actually reduce base_sigma a little to save some
     // more memory and increase the range of this function w.r.t. sigma
-    base_sigma = sqrt(((double)(base + 1))/base)*eta; 
-    self->base_samplers = (dgs_disc_gauss_dp_t**)malloc(sizeof(dgs_disc_gauss_dp_t*)*base);
-    if (!self->base_samplers){
+    base_sigma          = sqrt(((double)(base + 1)) / base) * eta;
+    self->base_samplers = (dgs_disc_gauss_dp_t **)malloc(sizeof(dgs_disc_gauss_dp_t *) * base);
+    if (!self->base_samplers) {
       dgs_rround_dp_clear(self);
       dgs_die("out of memory");
     }
-    
+
     for (int i = 0; i < base; ++i) {
-      self->base_samplers[i] = dgs_disc_gauss_dp_init(base_sigma, ((double)i)/base, tau, DGS_DISC_GAUSS_ALIAS);
+      self->base_samplers[i] = dgs_disc_gauss_dp_init(base_sigma, ((double)i) / base, tau, DGS_DISC_GAUSS_ALIAS);
     }
-    
-    // we assume for the precision we're targeting here using 
+
+    // we assume for the precision we're targeting here using
     // gaussian rounding on the first 25 bits is sufficient
     // do the rest using bernoulli (linear interpolation of gaussian)
-    self->digits = (int) ceil(25.0/self->log_base);
-    
+    self->digits = (int)ceil(25.0 / self->log_base);
+
     // compute rr_sigma2
-    self->s_bar2 = 1;
-    long double t = 1.0/ (base*base);
+    self->s_bar2  = 1;
+    long double t = 1.0 / (base * base);
     long double s = 1;
     for (int i = 1; i < self->digits; ++i) {
-        s *= t;
-        self->s_bar2 += s;
+      s *= t;
+      self->s_bar2 += s;
     }
-    self->s_bar2 *= (base_sigma*base_sigma);
-    
+    self->s_bar2 *= (base_sigma * base_sigma);
+
     // we use karney as fallback for small sigma, so we initialize it
-    self->B = dgs_bern_uniform_init(0);
+    self->B          = dgs_bern_uniform_init(0);
     self->B_half_exp = dgs_bern_dp_init(exp(-.5));
-    
+
     break;
   }
-  
-  default:
-    dgs_rround_dp_clear(self);
-    dgs_die("unknown algorithm %d", algorithm);
+
+  default: dgs_rround_dp_clear(self); dgs_die("unknown algorithm %d", algorithm);
   }
   return self;
 }
@@ -198,40 +196,34 @@ long dgs_rround_dp_call_karney(dgs_rround_dp_t *self, double sigma, double c) {
 }
 
 long dgs_rround_dp_call_convolution(dgs_rround_dp_t *self, double sigma, double c) {
-  double sigma2 = sigma*sigma;
-  
+  double sigma2 = sigma * sigma;
+
   // we need sigma to be larger than s_bar
   // otherwise fall back to karney
-  if (self->s_bar2 > sigma2) {
-    return dgs_rround_dp_call_karney(self, sigma, c);
-  }
+  if (self->s_bar2 > sigma2) { return dgs_rround_dp_call_karney(self, sigma, c); }
   double K = sqrt(sigma2 - self->s_bar2);
   // we use continuous gaussians instead of wide samplers
   // this is faster and (provably) works the same way
   double xr = _box_muller(self);
-  double c1 = c + K*xr;
-  
-  long c1_z = (long) floor(c1);
-  c1 -= floor(c1); // 0 <= c1 < 1
-  
-  c1 *= (1UL << self->digits*self->log_base);
-  int64_t center = (int64_t) c1;
-  c1 -= center; // 0 <= c1 < 1
-  
-  if (drand48() < c1)
-    ++center;
-  
+  double c1 = c + K * xr;
+
+  long c1_z = (long)floor(c1);
+  c1 -= floor(c1);  // 0 <= c1 < 1
+
+  c1 *= (1UL << self->digits * self->log_base);
+  int64_t center = (int64_t)c1;
+  c1 -= center;  // 0 <= c1 < 1
+
+  if (drand48() < c1) ++center;
+
   for (int i = 0; i < self->digits; ++i) {
     long x = self->base_samplers[center & self->mask]->call(self->base_samplers[center & self->mask]);
-    if ( (self->mask & center) > 0 && center < 0)
-            x -= 1;
-    
-    for (int j = 0; j < self->log_base; ++j) {
-      center /= 2;
-    }
+    if ((self->mask & center) > 0 && center < 0) x -= 1;
+
+    for (int j = 0; j < self->log_base; ++j) { center /= 2; }
     center += x;
   }
-  
+
   return center + c1_z;
 }
 
@@ -241,12 +233,10 @@ void dgs_rround_dp_clear(dgs_rround_dp_t *self) {
   if (self->B_half_exp) dgs_bern_dp_clear(self->B_half_exp);
   if (self->base_samplers) {
     for (int i = 0; i < (1 << self->log_base); ++i) {
-      if (self->base_samplers[i]) {
-        dgs_disc_gauss_dp_clear(self->base_samplers[i]);
-      }
+      if (self->base_samplers[i]) { dgs_disc_gauss_dp_clear(self->base_samplers[i]); }
     }
     free(self->base_samplers);
   }
-  
+
   free(self);
 }
