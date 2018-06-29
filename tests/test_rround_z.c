@@ -96,13 +96,13 @@ int main(int argc, char *argv[]) {
   test_ratios_dp( 4.0, 3, DGS_RROUND_UNIFORM_ONLINE);
   test_ratios_dp(15.4, 3, DGS_RROUND_UNIFORM_ONLINE);
   printf("\n");
-  
+
   test_ratios_dp( 3.0, 6, DGS_RROUND_KARNEY);
   test_ratios_dp( 2.0, 6, DGS_RROUND_KARNEY);
   test_ratios_dp( 4.0, 3, DGS_RROUND_KARNEY);
   test_ratios_dp(15.4, 3, DGS_RROUND_KARNEY);
   printf("\n");
-  
+
   test_ratios_dp( 3.0, 6, DGS_RROUND_CONVOLUTION);
   test_ratios_dp( 2.0, 6, DGS_RROUND_CONVOLUTION);
   test_ratios_dp( 4.0, 3, DGS_RROUND_CONVOLUTION);
@@ -122,13 +122,13 @@ int main(int argc, char *argv[]) {
   test_mean_dp( 3.3, 1.0, 6, DGS_RROUND_UNIFORM_ONLINE);
   test_mean_dp( 2.0, 1.5, 6, DGS_RROUND_UNIFORM_ONLINE);
   printf("\n");
-  
+
   test_mean_dp( 3.0, 0.0, 6, DGS_RROUND_KARNEY);
   test_mean_dp(10.0, 0.0, 6, DGS_RROUND_KARNEY);
   test_mean_dp( 3.3, 1.0, 6, DGS_RROUND_KARNEY);
   test_mean_dp( 2.0, 1.5, 6, DGS_RROUND_KARNEY);
   printf("\n");
-  
+
   test_mean_dp( 3.0, 0.0, 6, DGS_RROUND_CONVOLUTION);
   test_mean_dp(10.0, 0.0, 6, DGS_RROUND_CONVOLUTION);
   test_mean_dp( 3.3, 1.0, 6, DGS_RROUND_CONVOLUTION);

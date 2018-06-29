@@ -39,7 +39,7 @@ double run_mp(double sigma_, double c_, int tau, dgs_rround_alg_t alg, size_t nt
   double variance = 0.0;
   mpz_t r;
   mpz_init(r);
-  
+
   *t =  walltime(0);
   for(size_t i=0; i<ntrials; i++) {
     gen->call(r, gen, sigma, c, state);
@@ -52,7 +52,7 @@ double run_mp(double sigma_, double c_, int tau, dgs_rround_alg_t alg, size_t nt
   mpfr_clear(c);
 
   gmp_randclear(state);
-  
+
   variance /= ntrials;
   return sqrt(variance);
 }
@@ -60,7 +60,7 @@ double run_mp(double sigma_, double c_, int tau, dgs_rround_alg_t alg, size_t nt
 double run(double sigma, double c, int tau, int prec, dgs_rround_alg_t alg, size_t ntrials, unsigned long long *t) {
   if (prec == MP)
     return run_mp(sigma, c, tau, alg, ntrials, t);
-  else 
+  else
     return run_dp(sigma, c, tau, alg, ntrials, t);
 }
 
@@ -74,7 +74,7 @@ const char *alg_to_str(dgs_disc_gauss_alg_t alg) {
 }
 
 int main(int argc, char *argv[]) {
-  
+
   unsigned long long t;
 
   cmdline_params_rround_z_t params;
@@ -90,13 +90,13 @@ int main(int argc, char *argv[]) {
 
   printf("%s :: σ: %.2f, c: %.2f. τ: %ld, precision: %d, algorithm: %d -- ", argv[0],
          params.sigma, params.c, params.tau, params.precision, params.algorithm);
-  
+
   run(params.sigma, params.c, params.tau, params.precision, params.algorithm, params.ntrials, &t);
   double walltime = t/100000.0/params.ntrials*(1000.0*1000.0); // μs
 
   printf("wall time: %8.3f μs per call (rate: %8.3f per second)\n", walltime, 1000.0*1000.0/walltime);
 
   mpfr_free_cache();
-  
+
   return 0;
 }
