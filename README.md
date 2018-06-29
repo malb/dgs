@@ -4,6 +4,8 @@ A discrete Gaussian distribution on the Integers is a distribution where the int
 
 This library samples from this distributions.
 
+**WARNING: This library does not provide constant time implementations. Pull requests welcome.**
+
 ## Installation ##
 
 Clone this repository then do
